@@ -108,6 +108,28 @@
   font-weight: 600;
 }
 
+.tagBlock {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.tagChip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.35rem 0.7rem;
+  border-radius: 9999px;
+  border: 1px solid #bee3f8;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
 .lotInfo:last-of-type {
   border-bottom: none;
 }

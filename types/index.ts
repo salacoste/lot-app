@@ -25,6 +25,14 @@ type BiddingInfo = {
   debtor?: Debtor | null;
 };
 
+export type LotTag = {
+  key: string;
+  label: string;
+  family: string;
+  confidence?: number | null;
+  source?: "admin_override" | "rule" | "attribute" | "category" | "llm" | null;
+};
+
 export type Lot = {
   id: string;
   publicId: number;
@@ -64,6 +72,7 @@ export type Lot = {
   sameCadastralLots?: SimilarLot[];
   attributes?: Record<string, string>;
   needsDescriptionReview?: boolean;
+  tags?: LotTag[];
 };
 
 export type SimilarLot = {

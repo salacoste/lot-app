@@ -111,6 +111,8 @@ const isCurrentStage = (startDate: string, endDate: string) => {
   return now >= start && now < end;
 };
 
+const getTagLabel = (tag: NonNullable<Lot['tags']>[number]) => tag.label?.trim() || '';
+
 // Компонент получает данные через пропсы
 export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
   const router = useRouter();
@@ -489,6 +491,10 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
       }));
   }, [lot.attributes, dynamicFiltersConfig]);
 
+  const visibleTags = Array.isArray(lot.tags)
+    ? lot.tags.filter((tag) => getTagLabel(tag))
+    : [];
+
   return (
 
     <main className={styles.container}>
@@ -584,6 +590,19 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
           <p className={styles.lotInfo}><b>Номер лота:</b> {lot.publicId}</p>
           <p className={styles.lotInfo}><b>Тип торгов:</b> {lot.bidding?.type}</p>
           <p className={styles.lotInfo}><b>Прием заявок:</b> {lot.bidding?.bidAcceptancePeriod}</p>
+
+          {visibleTags.length > 0 && (
+            <div className={styles.tagBlock} aria-label="Публичные теги лота">
+              {visibleTags.map((tag, index) => {
+                const tagText = getTagLabel(tag);
+                return (
+                  <span key={`${tag.key || tagText}-${index}`} className={styles.tagChip}>
+                    {tagText}
+                  </span>
+                );
+              })}
+            </div>
+          )}
 
           {lot.bidding?.tradePeriod && (
             <p className={styles.lotInfo}><b>Период торгов:</b> {lot.bidding?.tradePeriod}</p>
