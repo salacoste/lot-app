@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate:api-types": "openapi-typescript ../scraper/Lots.WebApi/openapi/Lots.WebApi.json -o lib/generated/lots-webapi.ts --alphabetize",
+    "check:api-types": "openapi-typescript ../scraper/Lots.WebApi/openapi/Lots.WebApi.json -o lib/generated/lots-webapi.ts --alphabetize --check",
+    "typecheck": "next typegen && tsc --noEmit --pretty false"
   },
   "dependencies": {
     "@microsoft/signalr": "^10.0.0",
@@ -23,6 +26,7 @@
     "@types/pg": "^8.15.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "openapi-typescript": "7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

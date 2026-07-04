@@ -1,3 +1,14 @@
+import type { components } from '@/lib/generated/lots-webapi';
+
+export type BackendArbitrationManagerDto = components['schemas']['ArbitrationManagerDto'];
+export type BackendBiddingDto = components['schemas']['BiddingDto'];
+export type BackendCadastralItemDto = components['schemas']['CadastralItemDto'];
+export type BackendLotDocumentDto = components['schemas']['LotDocumentDto'];
+export type BackendLotDto = components['schemas']['LotDto'];
+export type BackendLotTagDto = components['schemas']['LotTagDto'];
+export type BackendPriceScheduleDto = components['schemas']['PriceScheduleDto'];
+export type BackendSimilarLotDto = components['schemas']['SimilarLotDto'];
+
 type ArbitrationManager = {
   name: string;
   inn?: string | null;
@@ -25,12 +36,12 @@ type BiddingInfo = {
   debtor?: Debtor | null;
 };
 
-export type LotTag = {
+export type LotTag = Omit<BackendLotTagDto, 'confidence' | 'family' | 'key' | 'label' | 'source'> & {
   key: string;
   label: string;
   family: string;
-  confidence?: number | null;
-  source?: "admin_override" | "rule" | "attribute" | "category" | "llm" | null;
+  confidence?: BackendLotTagDto['confidence'];
+  source?: 'admin_override' | 'rule' | 'attribute' | 'category' | 'llm' | null;
 };
 
 export type Lot = {
@@ -84,34 +95,20 @@ export type SimilarLot = {
   imageUrl: string | null;
 };
 
-export type LotDocument = {
+export type LotDocument = Omit<BackendLotDocumentDto, 'downloadUrl' | 'id' | 'title'> & {
   id: string;
   downloadUrl: string;
   title: string;
-  extension?: string | null;
-  isExternal?: boolean;
 };
 
-export type PriceSchedule = {
+export type PriceSchedule = Omit<BackendPriceScheduleDto, 'deposit' | 'endDate' | 'number' | 'price' | 'startDate'> & {
   number: number;
   startDate: string;
   endDate: string;
   price: number | null;
   deposit: number | null;
-  estimatedRank: number | null;
-  potentialRoi: number | null;
 };
 
-export interface CadastralInfo {
+export type CadastralInfo = Omit<BackendCadastralItemDto, 'cadastralNumber'> & {
   cadastralNumber: string;
-  area?: number;
-  cadastralCost?: number;
-  category?: string;
-  permittedUse?: string;
-  address?: string;
-  status?: string;
-  objectType?: string;
-  rightType?: string;
-  ownershipType?: string;
-  regDate?: string;
-}
+};
