@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next';
+import { unstable_rethrow } from 'next/navigation';
 import { generateSlug } from '../utils/slugify';
 import {
   PASSENGER_CARS_BASE_PATH,
@@ -52,10 +53,13 @@ export async function generateSitemaps() {
   return Array.from({ length: totalChunks }, (_, i) => ({ id: i }));
 }
 
-export default async function sitemap({ id }: { id: number }): Promise<MetadataRoute.Sitemap> {
+export default async function sitemap({ id }: { id: number | string | Promise<number | string> }): Promise<MetadataRoute.Sitemap> {
+  // Next 16 passes generated sitemap route params asynchronously.
+  const sitemapId = Number(await id);
+
   // Для id=0 (первый чанк) можно добавить статические страницы
   const staticRoutes: MetadataRoute.Sitemap = [];
-  if (id === 0) {
+  if (sitemapId === 0) {
     staticRoutes.push({ // можно добавить другие статические страницы
       url: BASE_URL,
       lastModified: new Date(),
@@ -81,7 +85,7 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
 
   // Запрашиваем чанк данных из API
   const pageSize = 5000; // Уменьшаем размер страницы до 5000, чтобы избежать ошибки 2MB cache limit
-  const page = Number(id) + 1; // API ожидает page начиная с 1
+  const page = sitemapId + 1; // API ожидает page начиная с 1
 
   const apiUrl = process.env.NEXT_PUBLIC_CSHARP_BACKEND_URL;
   if (!apiUrl)
@@ -119,7 +123,8 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
     return [...staticRoutes, ...lotRoutes];
 
   } catch (error) {
-    console.error(`Sitemap error for id ${id}:`, error);
+    unstable_rethrow(error);
+    console.error(`Sitemap error for id ${sitemapId}:`, error);
     return staticRoutes;
   }
 }

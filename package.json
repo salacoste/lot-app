@@ -9,7 +9,8 @@
     "lint": "next lint",
     "generate:api-types": "openapi-typescript ../scraper/Lots.WebApi/openapi/Lots.WebApi.json -o lib/generated/lots-webapi.ts --alphabetize",
     "check:api-types": "openapi-typescript ../scraper/Lots.WebApi/openapi/Lots.WebApi.json -o lib/generated/lots-webapi.ts --alphabetize --check",
-    "typecheck": "next typegen && tsc --noEmit --pretty false"
+    "typecheck": "next typegen && tsc --noEmit --pretty false",
+    "smoke:public": "NEXT_PUBLIC_CSHARP_BACKEND_URL=http://127.0.0.1:4021 node scripts/public-smoke/run-public-smoke.mjs"
   },
   "dependencies": {
     "@microsoft/signalr": "^10.0.0",
@@ -27,6 +28,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "openapi-typescript": "7.13.0",
+    "playwright": "^1.61.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
