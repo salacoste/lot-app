@@ -11,6 +11,7 @@ import AiEvaluationBlock from '@/components/AiEvaluationBlock/AiEvaluationBlock'
 import { generateSlug } from '../../../utils/slugify';
 import LotHeaderSummary, { LotHeaderGallery, LotHeaderStatusSummary, getStatusTheme } from './LotHeaderSummary';
 import LotFavoriteActions from './LotFavoriteActions';
+import LotDocumentsSection from './LotDocumentsSection';
 import { buildLotBreadcrumbs, getLotPagePath } from '@/utils/lotBreadcrumbs';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -879,34 +880,7 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
           </div>
         )}
 
-        {/* Документы лота (если есть) */}
-        {lot.documents && lot.documents.length > 0 && (
-          <div className={styles.descriptionSection}>
-            <h2 className={styles.sectionTitle}>Документы</h2>
-            <ul className={styles.documentList}>
-              {lot.documents.map((doc) => {
-                const downloadHref = doc.downloadUrl.startsWith('http')
-                  ? doc.downloadUrl
-                  : `${process.env.NEXT_PUBLIC_CSHARP_BACKEND_URL}${doc.downloadUrl}`;
-                return (
-                <li key={doc.id}>
-                  <a
-                    href={downloadHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.documentLink}
-                  >
-                    {doc.title}
-                    {doc.extension && !doc.title.toLowerCase().endsWith(doc.extension.toLowerCase()) && (
-                      <span className={styles.documentExt}> {doc.extension}</span>
-                    )}
-                  </a>
-                </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
+        <LotDocumentsSection documents={lot.documents ?? []} />
       </div>
 
       {/* Показываем карту, только если есть координаты */}
