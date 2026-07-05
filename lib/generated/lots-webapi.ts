@@ -1951,6 +1951,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/health/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WebApiLiveResponse"];
+                        "text/json": components["schemas"]["WebApiLiveResponse"];
+                        "text/plain": components["schemas"]["WebApiLiveResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/health/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WebApiReadyResponse"];
+                        "text/json": components["schemas"]["WebApiReadyResponse"];
+                        "text/plain": components["schemas"]["WebApiReadyResponse"];
+                    };
+                };
+                /** @description Service Unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WebApiReadyResponse"];
+                        "text/json": components["schemas"]["WebApiReadyResponse"];
+                        "text/plain": components["schemas"]["WebApiReadyResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health/version": {
         parameters: {
             query?: never;
@@ -1972,7 +2057,61 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["WebApiVersionResponse"];
+                        "text/json": components["schemas"]["WebApiVersionResponse"];
+                        "text/plain": components["schemas"]["WebApiVersionResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/health/workers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "X-Admin-Api-Key"?: string;
+                };
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WebApiWorkersResponse"];
+                        "text/json": components["schemas"]["WebApiWorkersResponse"];
+                        "text/plain": components["schemas"]["WebApiWorkersResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                        "text/json": string;
+                        "text/plain": string;
+                    };
                 };
             };
         };
@@ -3052,6 +3191,69 @@ export interface components {
             /** Format: double */
             minPrice?: number | null;
             regionCodes?: string[] | null;
+        };
+        WebApiLiveResponse: {
+            runtime: string;
+            status: string;
+            version: string;
+        };
+        WebApiReadinessChecks: {
+            deepSeekApiConfigured: boolean;
+            jwtAudiencePresent: boolean;
+            jwtIssuerPresent: boolean;
+            jwtKeyPresent: boolean;
+            parserServiceUrlPresent: boolean;
+            postgresConnectionStringPresent: boolean;
+            rosreestrServiceUrlPresent: boolean;
+            s3CredentialsPresent: boolean;
+            s3LotsBucketPresent: boolean;
+            s3PublicUrlBasePresent: boolean;
+            s3ServiceUrlPresent: boolean;
+            s3UserAdsBucketPresent: boolean;
+        };
+        WebApiReadyResponse: {
+            checks: components["schemas"]["WebApiReadinessChecks"];
+            parserReachabilityCoupling: string;
+            runtime: string;
+            status: string;
+            workerLagCoupling: string;
+        };
+        WebApiVersionResponse: {
+            scraperVersion: string;
+            webApiVersion: string;
+        };
+        WebApiWorkerHealthDiagnostic: {
+            configuredEnabled: boolean;
+            /** Format: int64 */
+            lagSeconds: number | null;
+            lastErrorCategory: string | null;
+            /** Format: date-time */
+            lastFailedAt: string | null;
+            /** Format: date-time */
+            lastNoWorkAt: string | null;
+            /** Format: date-time */
+            lastStartedAt: string | null;
+            /** Format: date-time */
+            lastSucceededAt: string | null;
+            /** Format: int64 */
+            queueDepth: number | null;
+            runtime: string;
+            stateSource: string;
+            status: string;
+            thresholds: components["schemas"]["WebApiWorkerHealthThresholds"];
+            workerId: string;
+        };
+        WebApiWorkerHealthThresholds: {
+            /** Format: int32 */
+            criticalLagSeconds: number;
+            /** Format: int32 */
+            warningLagSeconds: number;
+        };
+        WebApiWorkersResponse: {
+            runtime: string;
+            stateSource: string;
+            statusVocabulary: string[];
+            workers: components["schemas"]["WebApiWorkerHealthDiagnostic"][];
         };
     };
     responses: never;
