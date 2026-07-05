@@ -2681,6 +2681,7 @@ export interface paths {
                     priceTo?: number;
                     regions?: string[];
                     searchQuery?: string;
+                    sort?: string;
                     tags?: string;
                 };
                 header?: never;
