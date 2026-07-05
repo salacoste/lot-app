@@ -57,6 +57,11 @@
   color: #4a5568;
 }
 
+.errorMessage {
+  margin: 0 0 0.75rem;
+  color: #b91c1c;
+}
+
 .filtersSidebar {
   width: 100%;
   display: flex;

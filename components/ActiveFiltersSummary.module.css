@@ -1,0 +1,85 @@
+.summaryBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background-color: #f8fafc;
+}
+
+.summaryTitle {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.filterSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+.filterChipLabel {
+  white-space: nowrap;
+}
+
+.filterChipRemove {
+  border: none;
+  border-radius: 999px;
+  width: 1rem;
+  height: 1rem;
+  line-height: 1rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: #475569;
+  background: #e2e8f0;
+}
+
+.filterChipRemove:hover {
+  background: #dbeafe;
+}
+
+.clearAllButton {
+  align-self: flex-start;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 0.85rem;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.87rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.clearAllButton:hover {
+  background: #1d4ed8;
+}
+
+@media (max-width: 768px) {
+  .summaryBlock {
+    margin-bottom: 0.75rem;
+  }
+
+  .summaryTitle {
+    font-size: 0.82rem;
+  }
+
+  .filterChip {
+    font-size: 0.78rem;
+  }
+}
