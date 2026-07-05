@@ -11,7 +11,8 @@
     "check:api-types": "openapi-typescript ../scraper/Lots.WebApi/openapi/Lots.WebApi.json -o lib/generated/lots-webapi.ts --alphabetize --check",
     "typecheck": "next typegen && tsc --noEmit --pretty false",
     "smoke:public": "NEXT_PUBLIC_CSHARP_BACKEND_URL=http://127.0.0.1:4021 node scripts/public-smoke/run-public-smoke.mjs",
-    "smoke:account": "NEXT_PUBLIC_CSHARP_BACKEND_URL=http://127.0.0.1:4022 node scripts/account-smoke/run-account-smoke.mjs"
+    "smoke:account": "NEXT_PUBLIC_CSHARP_BACKEND_URL=http://127.0.0.1:4022 node scripts/account-smoke/run-account-smoke.mjs",
+    "smoke:s3": "node scripts/s3-smoke/run-s3-smoke.mjs"
   },
   "dependencies": {
     "@microsoft/signalr": "^10.0.0",
