@@ -6,12 +6,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LotMap from '../../../components/LotMap';
 import { Lot } from '../../../types';
-import Breadcrumbs from '../../../components/Breadcrumbs';
 import styles from './lot.module.css';
-import LotImageGallery from '../../../components/LotImageGallery/LotImageGallery';
 import AiEvaluationBlock from '@/components/AiEvaluationBlock/AiEvaluationBlock';
 import ContractModal from '@/components/ContractModal/ContractModal';
 import { generateSlug } from '../../../utils/slugify';
+import LotHeaderSummary, { LotHeaderGallery, LotHeaderStatusSummary, getStatusTheme } from './LotHeaderSummary';
 import { buildLotBreadcrumbs, getLotPagePath } from '@/utils/lotBreadcrumbs';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -64,31 +63,6 @@ const formatDate = (dateString: string) => {
     hour: '2-digit',
     minute: '2-digit',
   });
-};
-
-const getStatusTheme = (status?: string | null) => {
-  if (!status) return 'active'; // Если статуса нет, считаем активным
-  const s = status.toLowerCase();
-
-  // Конечные успешные
-  if (s.includes('завершенные') || s.includes('торги завершены')) {
-    return 'completed';
-  }
-
-  // Конечные неуспешные
-  if (
-    s.includes('отменен') ||
-    s.includes('не состоял') ||
-    s.includes('аннулирован')
-  ) {
-    return 'cancelled';
-  }
-
-  // Приостановленные (можно сделать желтым/оранжевым, если добавите .warning в css)
-  if (s.includes('приостановлен')) return 'warning';
-
-  // Все остальные (Открыт прием заявок, Идут торги и т.д.)
-  return 'active';
 };
 
 // Функция для определения, является ли статус конечным
@@ -424,7 +398,7 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
   };
 
   // TODO: Подготовка бейджей
-  const badges: any[] = [];
+  const badges: string[] = [];
 
   // Подготовка картинок для галереи
   // Если массив images пуст, пытаемся взять imageUrl или ставим заглушку
@@ -498,13 +472,11 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
   return (
 
     <main className={styles.container}>
-      <Breadcrumbs crumbs={crumbs} />
-
-      <button onClick={handleBackToList} className={styles.backLink}>
-        &larr; Вернуться к списку лотов
-      </button>
-
-      <h1 className={styles.mainLotTitle}>{lot.title ? lot.title : lot.description}</h1>
+      <LotHeaderSummary
+        lot={lot}
+        crumbs={crumbs}
+        onBackToList={handleBackToList}
+      />
 
       <div className={styles.lotDetailGrid}>
 
@@ -512,21 +484,21 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
 
         {/* --- ЛЕВАЯ КОЛОНКА: ФОТОГАЛЕРЕЯ --- */}
         <div className={styles.imageSection}>
-          <LotImageGallery
-            images={galleryImages}
-            title={lot.title || ''}
+          <LotHeaderGallery
+            lot={lot}
+            galleryImages={galleryImages}
             badges={badges}
           />
           {user?.isAdmin && (
             <div style={{ marginTop: '1rem', textAlign: 'center' }}>
               <label className={styles.ctaButton} style={{ cursor: 'pointer', display: 'inline-block', padding: '0.5rem 1rem', background: '#3182ce', color: '#fff' }}>
                 {isUploadingImage ? 'Загрузка...' : 'Добавить фото'}
-                <input 
-                  type="file" 
-                  accept="image/*" 
+                <input
+                  type="file"
+                  accept="image/*"
                   multiple
-                  style={{ display: 'none' }} 
-                  onChange={handleImageUpload} 
+                  style={{ display: 'none' }}
+                  onChange={handleImageUpload}
                   disabled={isUploadingImage}
                 />
               </label>
@@ -537,55 +509,11 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
         {/* Правая колонка: Информация о лоте */}
         <div className={styles.infoSection}>
 
-          {/* Динамический бейдж со статусом торгов */}
-          <div className={`${styles.statusBadge} ${styles[getStatusTheme(lot.tradeStatus)]}`}>
-            {lot.tradeStatus ? lot.tradeStatus : 'Торги идут (прием заявок)'}
-          </div>
-
-          {lot.tradeStatusReason && (
-            <div className={`${styles.statusReason} ${styles[getStatusTheme(lot.tradeStatus)]}`}>
-              <b>Причина:</b>{' '}
-              {lot.tradeStatusReason.length > 200 && !isReasonExpanded
-                ? `${lot.tradeStatusReason.substring(0, 200)}... `
-                : lot.tradeStatusReason}
-              {lot.tradeStatusReason.length > 200 && (
-                <button
-                  onClick={() => setIsReasonExpanded(!isReasonExpanded)}
-                  className={styles.expandReasonBtn}
-                >
-                  {isReasonExpanded ? 'Скрыть' : 'Читать далее'}
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Активные лоты с этим кадастровым номером (под статусом) */}
-          {lot.sameCadastralLots && lot.sameCadastralLots.length > 0 && (
-            <div className={styles.sameCadastralTopBlock}>
-              <h3 className={styles.sameCadastralTopTitle}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                  <line x1="12" y1="9" x2="12" y2="13"></line>
-                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-                Внимание: найдены активные торги по этому объекту!
-              </h3>
-              <div className={styles.sameCadastralTopList}>
-                {lot.sameCadastralLots.map((sl) => {
-                  const slSlug = sl.slug ?? generateSlug(sl.title || '');
-                  const slUrl = `/lot/${slSlug}-${sl.publicId}`;
-                  return (
-                    <a key={sl.id} href={slUrl} className={styles.sameCadastralTopLink}>
-                      <span className={styles.sameCadastralTopLinkTitle}>{sl.title}</span>
-                      {sl.startPrice != null && (
-                        <span className={styles.sameCadastralTopLinkPrice}>{sl.startPrice.toLocaleString('ru-RU')} ₽</span>
-                      )}
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <LotHeaderStatusSummary
+            lot={lot}
+            isReasonExpanded={isReasonExpanded}
+            onToggleReason={() => setIsReasonExpanded(!isReasonExpanded)}
+          />
 
           <p className={styles.lotInfo}><b>Номер лота:</b> {lot.publicId}</p>
           <p className={styles.lotInfo}><b>Тип торгов:</b> {lot.bidding?.type}</p>
