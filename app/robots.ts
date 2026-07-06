@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next';
 
 // Функция, которая вернет конфиг robots.txt
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://s-lot.ru'; 
-  
-  // Генерируем список sitemap-ов. 
+  const baseUrl = 'https://auction.thepeace.ru';
+
+  // Генерируем список sitemap-ов.
   // Пока sitemap-ов 2-3, вписываем вручную.
   // Если будет много — лучше сделать цикл.
   const sitemaps = [
@@ -21,6 +21,6 @@ export default function robots(): MetadataRoute.Robots {
       disallow: '/api/',
     },
     // Robots.txt поддерживает массив sitemap
-    sitemap: sitemaps, 
+    sitemap: sitemaps,
   };
 }

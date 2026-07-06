@@ -7,7 +7,7 @@ import { buildLotBreadcrumbs, PASSENGER_CAR_CATEGORY } from '../../../utils/lotB
 import { generateBreadcrumbListSchema } from '../../../utils/listingSchemas';
 import { FINAL_TRADE_STATUSES } from '../../data/constants';
 
-const BASE_URL = 'https://s-lot.ru';
+const BASE_URL = 'https://auction.thepeace.ru';
 
 /**
  * Генерирует правильный URL лота с slug (из БД или сгенерированный на фронте для старых лотов)
@@ -57,7 +57,7 @@ function getProductBrand(lot: Lot): Record<string, string> {
 
   return {
     '@type': 'Organization',
-    name: 's-lot.ru',
+    name: 'auction.thepeace.ru',
     url: BASE_URL,
   };
 }

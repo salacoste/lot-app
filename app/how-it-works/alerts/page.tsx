@@ -3,10 +3,10 @@ import Link from 'next/link';
 import styles from './alerts-info.module.css';
 
 export const metadata: Metadata = {
-  title: 'Как работает умная рассылка лотов | s-lot.ru',
+  title: 'Как работает умная рассылка лотов | auction.thepeace.ru',
   description: 'Настройте автоматические email-уведомления о новых лотах с торгов по банкротству. Алгоритм сбора, очистки и подбора имущества по вашим критериям.',
   openGraph: {
-    title: 'Как работает умная рассылка лотов | s-lot.ru',
+    title: 'Как работает умная рассылка лотов | auction.thepeace.ru',
     description: 'Получайте свежие лоты с торгов прямо на почту. Экономьте часы на ручном поиске.',
   },
 };
@@ -62,7 +62,7 @@ export default function AlertsInfoPage() {
 
       <div className={styles.content}>
         <section className={styles.section}>
-          <h2>Как работает алгоритм s-lot.ru?</h2>
+          <h2>Как работает алгоритм auction.thepeace.ru?</h2>
           <p>
             Наш сервис не просто пересылает сырые данные с площадок. За каждым письмом 
             стоит сложный процесс сбора, очистки и классификации информации:

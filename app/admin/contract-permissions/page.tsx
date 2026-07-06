@@ -1,7 +1,7 @@
 import AdminContractPermissionsClient from './AdminContractPermissionsClient';
 
 export const metadata = {
-    title: 'Разрешения на договоры | s-lot.ru',
+    title: 'Разрешения на договоры | auction.thepeace.ru',
     description: 'Панель администратора',
 };
 

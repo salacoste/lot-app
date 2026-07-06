@@ -2,7 +2,7 @@ import { Lot } from '@/types';
 import { generateSlug } from '@/utils/slugify';
 import { BreadcrumbCrumb } from '@/utils/lotBreadcrumbs';
 
-const BASE_URL = 'https://s-lot.ru';
+const BASE_URL = 'https://auction.thepeace.ru';
 
 function getLotAbsoluteUrl(lot: Lot): string {
   const slug = lot.slug ?? generateSlug(lot.title || lot.description);

@@ -142,7 +142,7 @@ def main() -> None:
         ("Банк: ПАО Сбербанк", False, False),
         ("БИК: 044525225", False, False),
         ("Корр. счет: 30101810400000000225", False, False),
-        ("E-mail: info@s-lot.ru", False, False),
+        ("E-mail: info@auction.thepeace.ru", False, False),
         ("Тел.: _______________________", False, False),
         ("", False, False),
         ("____________________ /Степанов Дмитрий Александрович/", False, False),

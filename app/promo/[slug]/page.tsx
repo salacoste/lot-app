@@ -87,7 +87,7 @@ export default async function PromoLotPage({ params }: Props) {
     '@type': 'RealEstateListing', // Или 'SingleFamilyResidence'
     'name': lot.title,
     'description': lot.description,
-    'image': galleryImages.map(img => `https://s-lot.ru${img}`), // Лучше полные URL
+    'image': galleryImages.map(img => `https://auction.thepeace.ru${img}`), // Лучше полные URL
     'address': {
       '@type': 'PostalAddress',
       'streetAddress': lot.address // Просто строка, если нет разбивки
@@ -98,7 +98,7 @@ export default async function PromoLotPage({ params }: Props) {
       'price': lot.priceStart.replace(/\s/g, ''), // Убираем пробелы "40 000" -> "40000"
       'priceCurrency': 'RUB',
       'availability': 'https://schema.org/InStock',
-      'url': `https://s-lot.ru/promo/${slug}` // Ссылка на страницу
+      'url': `https://auction.thepeace.ru/promo/${slug}` // Ссылка на страницу
     }
   };
 

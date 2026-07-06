@@ -81,7 +81,7 @@ export const Header = () => {
                     <Link href="/" className={styles.logoLink}>
                         <Image
                             src="/s-lot_logo.png"
-                            alt="s-lot.ru Логотип"
+                            alt="auction.thepeace.ru Логотип"
                             width={120} // Примерная ширина (Next.js требует width/height)
                             height={40} // Высота
                             className={styles.logoImage}

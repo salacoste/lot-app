@@ -37,7 +37,7 @@ const generateKeywords = (lot: Lot): string => {
   // Базовые ключевые слова для любой страницы
   const baseKeywords = [
     'торги по банкротству', 'аукционы по банкротству', 'имущество банкротов', 'аукцион',
-    'электронные торги', 'купить на торгах', 'купить со скидкой', 'имущество должников', 's-lot.ru'
+    'электронные торги', 'купить на торгах', 'купить со скидкой', 'имущество должников', 'auction.thepeace.ru'
   ];
 
   // Ключевые слова на основе категорий
@@ -192,7 +192,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // Формируем Title в зависимости от статуса
   const title = isActive
-    ? `Купить ${lotTitle} на торгах по банкротству за ${formattedPrice} ₽ — s-lot.ru`
+    ? `Купить ${lotTitle} на торгах по банкротству за ${formattedPrice} ₽ — auction.thepeace.ru`
     : `[Архив] ${lotTitle} — ${lot.tradeStatus || 'Торги завершены'}`;
   
   // Формируем Description в зависимости от статуса
@@ -203,7 +203,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         lot.bidding?.tradeNumber ? `Номер торгов: ${lot.bidding.tradeNumber}` : null,
         lot.bidding?.tradePeriod ? `Торги: ${lot.bidding.tradePeriod}` : null,
         lot.propertyRegionName ? `Регион: ${lot.propertyRegionName}` : null,
-        'Открытый аукцион по реализации имущества банкротов. Участвуйте в торгах на s-lot.ru!'
+        'Открытый аукцион по реализации имущества банкротов. Участвуйте в торгах на auction.thepeace.ru!'
       ].filter(Boolean)
     : [
         `ВНИМАНИЕ: Торги по данному лоту завершены. Статус: ${lot.tradeStatus || 'Архив'}.`,
@@ -211,13 +211,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         `Начальная цена составляла: ${formattedPrice} ₽`,
         lot.bidding?.tradeNumber ? `Номер торгов: ${lot.bidding.tradeNumber}` : null,
         lot.propertyRegionName ? `Регион: ${lot.propertyRegionName}` : null,
-        'Исторические данные об аукционе по банкротству на s-lot.ru.'
+        'Исторические данные об аукционе по банкротству на auction.thepeace.ru.'
       ].filter(Boolean);
 
   const description = descriptionParts.join('. ');
   
   const keywords = generateKeywords(lot);
-  const baseUrl = 'https://s-lot.ru';
+  const baseUrl = 'https://auction.thepeace.ru';
   const lotUrl = generateLotUrl(lot, baseUrl);
   
   // Подготовка изображений для Open Graph
@@ -245,7 +245,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url: lotUrl,
-      siteName: 's-lot.ru',
+      siteName: 'auction.thepeace.ru',
       images: ogImages,
       locale: 'ru_RU',
       type: 'website',
@@ -264,7 +264,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     other: {
       ...(lot.createdAt && { 'article:published_time': new Date(lot.createdAt).toISOString() }),
       'article:modified_time': new Date().toISOString(),
-      'article:author': lot.bidding?.arbitrationManager?.name || 's-lot.ru',
+      'article:author': lot.bidding?.arbitrationManager?.name || 'auction.thepeace.ru',
       'article:section': lot.categories?.[0]?.name || 'Торги по банкротству',
     },
   };

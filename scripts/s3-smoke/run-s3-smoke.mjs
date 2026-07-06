@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 const repoRoot = resolve(process.cwd());
 const artifactsDir = resolve(repoRoot, 'test-results/s3-smoke');
-const publicOrigin = 'https://s-lot.ru';
+const publicOrigin = 'https://auction.thepeace.ru';
 const mode = process.env.S3_SMOKE_MODE || 'mock';
 const runId = process.env.S3_SMOKE_RUN_ID || `local-${new Date().toISOString().replace(/[:.]/g, '-')}`;
 const skipCode = 78;
@@ -60,7 +60,7 @@ function assert(condition, message) {
 
 function parsePublicOrigin() {
   const parsed = new URL(publicOrigin);
-  assert(parsed.href === 'https://s-lot.ru/', `Public origin must remain https://s-lot.ru for Story 7-5: ${publicOrigin}`);
+  assert(parsed.href === 'https://auction.thepeace.ru/', `Public origin must remain https://auction.thepeace.ru for Story 7-5: ${publicOrigin}`);
   assert(parsed.hostname !== expected.providerHost, `Public origin must not expose provider host ${expected.providerHost}`);
   return parsed;
 }

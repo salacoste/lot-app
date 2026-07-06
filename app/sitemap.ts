@@ -8,7 +8,7 @@ import {
   getModelsForBrand,
 } from '../utils/vehiclePaths';
 
-const BASE_URL = 'https://s-lot.ru';
+const BASE_URL = 'https://auction.thepeace.ru';
 
 async function getPassengerCarListingRoutes(): Promise<MetadataRoute.Sitemap> {
   const catalog = await fetchVehicleFilterOptions();

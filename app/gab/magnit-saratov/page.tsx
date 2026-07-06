@@ -15,7 +15,7 @@ export default function GabPage() {
     '@type': 'RealEstateListing',
     'name': 'Помещение с арендатором Магнит, 870 кв.м',
     'description': 'Готовый арендный бизнес с федеральным арендатором. Продажа с торгов по банкротству.',
-    'image': 'https://s-lot.ru/images/magnit-saratov.jpg',
+    'image': 'https://auction.thepeace.ru/images/magnit-saratov.jpg',
     'address': {
       '@type': 'PostalAddress',
       'streetAddress': 'ул. Астраханская, д. 40 «А»',
@@ -179,7 +179,7 @@ export default function GabPage() {
             <div className={styles.ctaBlock}>
               {/* <p className={styles.ctaText}>Хотите забрать этот лот?</p> */}
               {/* <a href="tel:+79000000000" className={styles.callButton}>Позвонить агенту</a> */}
-              <a href="mailto:info@s-lot.ru?subject=Запрос финмодели Магнит Саратов" className={styles.emailLink}>
+              <a href="mailto:info@auction.thepeace.ru?subject=Запрос финмодели Магнит Саратов" className={styles.emailLink}>
                 📊 Получить фин. модель
               </a>
 

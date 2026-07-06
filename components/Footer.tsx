@@ -6,14 +6,14 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-container">
         <p>
-          s-lot.ru — сервис для поиска и анализа лотов с торгов по банкротству. Вся информация собирается из открытых официальных источников.
+          auction.thepeace.ru — сервис для поиска и анализа лотов с торгов по банкротству. Вся информация собирается из открытых официальных источников.
         </p>
         <p>
           Используя сервис, вы соглашаетесь с <Link href="/agreement">Пользовательским соглашением</Link> и <Link href="/privacy">Политикой конфиденциальности</Link>.
           Оплачивая услуги, вы принимаете <Link href="/terms">Публичную оферту</Link>.
         </p>
         <p>
-          ИП Степанов Дмитрий Александрович | Email: <a href="mailto:info@s-lot.ru">info@s-lot.ru</a>
+          ИП Степанов Дмитрий Александрович | Email: <a href="mailto:info@auction.thepeace.ru">info@auction.thepeace.ru</a>
         </p>
         <VersionDisplay />
         <nav>

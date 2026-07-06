@@ -4,7 +4,7 @@ import styles from './page.module.css';
 export default function PrivacyPolicyPage() {
   return (
     <main className={styles.main}>
-      <h1>Политика конфиденциальности сервиса s-lot.ru</h1>
+      <h1>Политика конфиденциальности сервиса auction.thepeace.ru</h1>
       <p><strong>Редакция от 27 октября 2025 г.</strong></p>
 
       <h2>1. Какие данные мы собираем и зачем</h2>
@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
       <p>
         По всем вопросам, связанным с обработкой ваших персональных данных, вы можете обратиться в Службу поддержки:
         <br />
-        <strong>Email:</strong> support@s-lot.ru
+        <strong>Email:</strong> support@auction.thepeace.ru
       </p>
     </main>
   );
