@@ -71,7 +71,7 @@ export default function SubscribePage() {
                 <div className={styles.infoBanner}>
                     <strong>Внимание:</strong> Онлайн-оплата на сайте временно недоступна по техническим причинам.<br/>
                     Для подключения PRO-тарифа, пожалуйста, напишите нам на e-mail: {' '}
-                    <a href="mailto:info@s-lot.ru">info@s-lot.ru</a>.
+                    <a href="mailto:info@auction.thepeace.ru">info@auction.thepeace.ru</a>.
                     Мы оперативно выставим счет или пришлем ссылку для оплаты.
                 </div>
 

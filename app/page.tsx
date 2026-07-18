@@ -19,6 +19,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useQueryNavigation } from '@/hooks/useQueryNavigation';
 import { buildPassengerCarListingBreadcrumbs } from '@/utils/lotBreadcrumbs';
 import { PASSENGER_CAR_CATEGORY } from '@/utils/vehiclePaths';
+import ActiveFiltersSummary from '@/components/ActiveFiltersSummary';
+import { type QueryUpdates } from '@/lib/queryNavigation';
 
 // Обертка для основного компонента, чтобы использовать Suspense
 export default function PageWrapper() {
@@ -43,6 +45,7 @@ function Page() {
   const categoriesParam = params.getAll('categories');
   const isSharedOwnershipParam = params.get('isSharedOwnership');
   const regionsParam = params.getAll('regions');
+  const tagsParam = params.get('tags') || '';
 
   // Извлекаем динамические фильтры из URL
   const dynamicFiltersParam: Record<string, string> = {};
@@ -82,6 +85,7 @@ function Page() {
   const [lots, setLots] = useState<Lot[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
 
   // Загрузка данных ТОЛЬКО из searchParams
@@ -96,6 +100,7 @@ function Page() {
 
     const apiParams = new URLSearchParams(params.toString());
     apiParams.set('pageSize', String(PAGE_SIZE));
+    setError(null);
 
     try {
       const res = await fetch(`${apiUrl}/api/lots/list?${apiParams.toString()}`, {
@@ -113,6 +118,7 @@ function Page() {
       setTotalPages(data.totalPages);
     } catch (e) {
       console.error('Ошибка при загрузке лотов:', e);
+      setError('Не удалось загрузить список лотов. Проверьте соединение или повторите позднее.');
       setLots([]);
       setTotalPages(0);
     } finally {
@@ -145,6 +151,144 @@ function Page() {
       isCancelled = true;
     };
   }, [fetchLots, authLoading, user?.isAdmin]);
+
+  const dynamicFilterLabelByKey: Record<string, string> = {
+    brand: 'Марка',
+    model: 'Модель',
+    year: 'Год',
+    mileage: 'Пробег, км',
+  };
+
+  const activeFilterChips = useMemo(() => {
+    const chips = [];
+
+    if (searchQueryParam) {
+      chips.push({
+        id: 'searchQuery',
+        label: `Поиск: ${searchQueryParam}`,
+        onRemove: () => updateQuery({ searchQuery: null, page: 1 }),
+      });
+    }
+
+    if (biddingType && biddingType !== 'Все') {
+      chips.push({
+        id: 'biddingType',
+        label: `Тип торгов: ${biddingType}`,
+        onRemove: () => updateQuery({ biddingType: 'Все', page: 1 }),
+      });
+    }
+
+    if (priceFromParam) {
+      chips.push({
+        id: 'priceFrom',
+        label: `Цена от: ${priceFromParam}`,
+        onRemove: () => updateQuery({ priceFrom: null, page: 1 }),
+      });
+    }
+
+    if (priceToParam) {
+      chips.push({
+        id: 'priceTo',
+        label: `Цена до: ${priceToParam}`,
+        onRemove: () => updateQuery({ priceTo: null, page: 1 }),
+      });
+    }
+
+    if (isSharedOwnershipParam === 'false') {
+      chips.push({
+        id: 'isSharedOwnership_false',
+        label: 'Собственность: Целиком',
+        onRemove: () => updateQuery({ isSharedOwnership: null, page: 1 }),
+      });
+    }
+
+    if (isSharedOwnershipParam === 'true') {
+      chips.push({
+        id: 'isSharedOwnership_true',
+        label: 'Собственность: Только доли',
+        onRemove: () => updateQuery({ isSharedOwnership: null, page: 1 }),
+      });
+    }
+
+    if (categoriesParam.length > 0) {
+      chips.push({
+        id: 'categories',
+        label: `Категории: ${categoriesParam.join(', ')}`,
+        onRemove: () => updateQuery({ categories: [], page: 1 }),
+      });
+    }
+
+    if (regionsParam.length > 0) {
+      chips.push({
+        id: 'regions',
+        label: `Регионы: ${regionsParam.join(', ')}`,
+        onRemove: () => updateQuery({ regions: [], page: 1 }),
+      });
+    }
+
+    if (tagsParam) {
+      const tags = tagsParam.split(',').filter(Boolean).map((tag) => tag.trim());
+      if (tags.length > 0) {
+        chips.push({
+          id: 'tags',
+          label: `Теги: ${tags.join(', ')}`,
+          onRemove: () => updateQuery({ tags: null, page: 1 }),
+        });
+      }
+    }
+
+    Object.entries(dynamicFiltersParam).forEach(([key, value]) => {
+      if (!value) return;
+      const label = dynamicFilterLabelByKey[key] ?? `Атрибут: ${key}`;
+      const chipUpdate: QueryUpdates = { page: 1 };
+      chipUpdate[`attr_${key}`] = null;
+      chips.push({
+        id: `attr_${key}`,
+        label: `${label}: ${value}`,
+        onRemove: () => updateQuery(chipUpdate),
+      });
+    });
+
+    return chips;
+  }, [
+    searchQueryParam,
+    biddingType,
+    priceFromParam,
+    priceToParam,
+    isSharedOwnershipParam,
+    categoriesParam,
+    regionsParam,
+    tagsParam,
+    dynamicFiltersParam,
+    updateQuery,
+  ]);
+
+  const clearAllFilters = useCallback(() => {
+    const updates: Record<string, string | string[] | number | null> = {
+      biddingType: 'Все',
+      searchQuery: null,
+      priceFrom: null,
+      priceTo: null,
+      isSharedOwnership: null,
+      categories: [],
+      regions: [],
+      page: 1,
+    };
+
+    Object.keys(dynamicFiltersParam).forEach((key) => {
+      updates[`attr_${key}`] = null;
+    });
+
+    if (tagsParam) {
+      updates.tags = null;
+    }
+
+    updateQuery(updates);
+  }, [dynamicFiltersParam, tagsParam, updateQuery]);
+
+  const handleRetry = useCallback(() => {
+    fetchLots();
+  }, [fetchLots]);
 
   return (
     <main className={styles.main}>
@@ -254,11 +398,19 @@ function Page() {
         {passengerCarCrumbs && <Breadcrumbs crumbs={passengerCarCrumbs} />}
 
         <div className={styles.filtersContainer}>
+          <ActiveFiltersSummary
+            activeFilterCount={activeFilterChips.length}
+            chips={activeFilterChips}
+            onClearAll={clearAllFilters}
+          />
+
           <button
             className={styles.toggleFiltersButton}
             onClick={() => setIsFiltersVisible(!isFiltersVisible)}
           >
-            {isFiltersVisible ? 'Скрыть фильтры' : 'Показать фильтры'}
+            {isFiltersVisible
+              ? `Скрыть фильтры${activeFilterChips.length > 0 ? ` (${activeFilterChips.length})` : ''}`
+              : `Показать фильтры${activeFilterChips.length > 0 ? ` (${activeFilterChips.length})` : ''}`}
           </button>
 
           {/* Фильтры */}
@@ -277,8 +429,15 @@ function Page() {
           </aside>
         </div>
 
-        {loading ? (
+        {loading || authLoading ? (
           <div className={styles.loadingMessage}>Загрузка лотов...</div>
+        ) : error ? (
+          <div>
+            <p className={styles.errorMessage}>{error}</p>
+            <button className={styles.searchButton} type="button" onClick={handleRetry}>
+              Повторить
+            </button>
+          </div>
         ) : lots.length > 0 ? (
           <>
             <Pagination
@@ -305,7 +464,21 @@ function Page() {
             />
           </>
         ) : (
-          <p>По вашему запросу лотов не найдено.</p>
+          <div>
+            <p className={styles.emptyMessage}>
+              По вашему запросу лотов не найдено.
+              {activeFilterChips.length > 0 ? ' Попробуйте убрать один или несколько фильтров.' : null}
+            </p>
+            {activeFilterChips.length > 0 ? (
+              <button
+                className={styles.searchButton}
+                type="button"
+                onClick={clearAllFilters}
+              >
+                Сбросить все фильтры
+              </button>
+            ) : null}
+          </div>
         )}
       </section>
     </main>

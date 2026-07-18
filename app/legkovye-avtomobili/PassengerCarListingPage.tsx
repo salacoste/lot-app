@@ -17,7 +17,7 @@ import {
 import PassengerCarListingClient from './PassengerCarListingClient';
 import styles from './listing.module.css';
 
-const BASE_URL = 'https://s-lot.ru';
+const BASE_URL = 'https://auction.thepeace.ru';
 
 function extractListingSearchParams(searchParams: Record<string, string | undefined>): Record<string, string> {
   const params: Record<string, string> = {};
@@ -38,28 +38,28 @@ type ListingPageProps = {
 
 function buildListingTitle(brand?: string, model?: string): string {
   if (brand && model) {
-    return `${brand} ${model} — легковые автомобили с торгов по банкротству | s-lot.ru`;
+    return `${brand} ${model} — легковые автомобили с торгов по банкротству | auction.thepeace.ru`;
   }
 
   if (brand) {
-    return `${brand} — легковые автомобили с торгов по банкротству | s-lot.ru`;
+    return `${brand} — легковые автомобили с торгов по банкротству | auction.thepeace.ru`;
   }
 
-  return `${PASSENGER_CAR_CATEGORY_LABEL} по банкротству | s-lot.ru`;
+  return `${PASSENGER_CAR_CATEGORY_LABEL} по банкротству | auction.thepeace.ru`;
 }
 
 function buildListingDescription(totalCount: number, brand?: string, model?: string): string {
   const countLabel = totalCount > 0 ? `${totalCount} лотов` : 'Лоты';
 
   if (brand && model) {
-    return `${countLabel} ${brand} ${model} на электронных торгах по банкротству. Актуальные цены, даты торгов и подробные описания на s-lot.ru.`;
+    return `${countLabel} ${brand} ${model} на электронных торгах по банкротству. Актуальные цены, даты торгов и подробные описания на auction.thepeace.ru.`;
   }
 
   if (brand) {
-    return `${countLabel} ${brand} на электронных торгах по банкротству. Выберите модель и участвуйте в аукционах на s-lot.ru.`;
+    return `${countLabel} ${brand} на электронных торгах по банкротству. Выберите модель и участвуйте в аукционах на auction.thepeace.ru.`;
   }
 
-  return `${countLabel} легковых автомобилей на электронных торгах по банкротству. Фильтры по марке, модели, году выпуска и пробегу на s-lot.ru.`;
+  return `${countLabel} легковых автомобилей на электронных торгах по банкротству. Фильтры по марке, модели, году выпуска и пробегу на auction.thepeace.ru.`;
 }
 
 function buildListingKeywords(brand?: string, model?: string): string {
@@ -68,7 +68,7 @@ function buildListingKeywords(brand?: string, model?: string): string {
     'авто с торгов по банкротству',
     'купить автомобиль на торгах',
     'аукцион автомобилей банкротство',
-    's-lot.ru',
+    'auction.thepeace.ru',
   ];
 
   if (brand) {
@@ -148,7 +148,7 @@ export async function buildPassengerCarListingMetadata(
       title,
       description,
       url: canonical,
-      siteName: 's-lot.ru',
+      siteName: 'auction.thepeace.ru',
       locale: 'ru_RU',
       type: 'website',
     },

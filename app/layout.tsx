@@ -17,7 +17,7 @@ import RouterRecovery from "@/components/RouterRecovery";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "s-lot.ru - поиск и анализ лотов с торгов по банкротству",
+  title: "auction.thepeace.ru - поиск и анализ лотов с торгов по банкротству",
   description: "сайт-агрегатор торгов по банкротству, аукционы России, публичные предложения, выгодные лоты",
 };
 

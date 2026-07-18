@@ -1,14 +1,17 @@
 // components/AiEvaluationBlock/AiEvaluationBlock.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import styles from './aiEvaluationBlock.module.css';
+import { shouldApplyEvaluationFetchResult } from '@/utils/adminAiEvaluationEditor.logic.shared.mjs';
 
 interface EvaluationData {
-    estimatedPrice?: number;
-    liquidityScore?: number;
+    estimatedPrice?: number | null;
+    liquidityScore?: number | null;
     investmentSummary: string | null | undefined;
-    reasoningText?: string;
+    reasoningText?: string | null;
+    isReasoningTextTeaser?: boolean;
     upsidePercent?: number;
 }
 
@@ -17,6 +20,7 @@ interface AiEvaluationBlockProps {
     lotPublicId?: number | string;
     currentPrice?: number | null;
     quickData?: EvaluationData;
+    externalData?: EvaluationData | null;
     priceConfidence?: string | null;
     initialReasoningText?: string | null;
     isTeaser?: boolean;
@@ -29,6 +33,7 @@ const getQuickConfidenceClass = (conf: string | null | undefined, styles: Record
         case 'medium': return styles.confidenceMedium;
         case 'low': return styles.confidenceLow;
         case 'not_evaluable': return styles.confidenceNotEvaluable;
+        case 'manual': return styles.confidenceManual;
         default: return styles.confidenceMedium;
     }
 };
@@ -39,6 +44,7 @@ const getQuickConfidenceLabel = (conf: string | null | undefined) => {
         case 'medium': return 'Средняя точность';
         case 'low': return 'Низкая точность (мало данных)';
         case 'not_evaluable': return 'Автооценка недоступна для этого типа лота';
+        case 'manual': return 'Ручная оценка';
         default: return 'Точность оценки';
     }
 };
@@ -48,6 +54,7 @@ export default function AiEvaluationBlock({
     lotPublicId,
     currentPrice,
     quickData,
+    externalData,
     priceConfidence,
     initialReasoningText,
     isTeaser,
@@ -80,43 +87,73 @@ export default function AiEvaluationBlock({
     const apiUrl = process.env.NEXT_PUBLIC_CSHARP_BACKEND_URL;
     const { user } = useAuth();
     const router = useRouter();
+    const externalDataRef = useRef(externalData);
+    externalDataRef.current = externalData;
 
     useEffect(() => {
-        if (type !== 'deep' || !lotPublicId || !user) {
+        if (externalData !== undefined) {
+            setEvaluationResult(externalData);
+            setIsLoadingInitial(false);
+            setIsEvaluating(false);
+            return;
+        }
+
+        if (type === 'quick') {
+            setEvaluationResult(quickData || null);
+        }
+    }, [externalData, quickData, type]);
+
+    useEffect(() => {
+        if (externalData !== undefined || type !== 'deep' || !lotPublicId || !user) {
             setIsLoadingInitial(false);
             return;
         }
+
+        const abortController = new AbortController();
 
         const checkMyEvaluation = async () => {
             try {
                 // Пытаемся получить оценку
                 // Бэкенд вернет 200 ТОЛЬКО если пользователь уже тратил лимит на этот лот
                 const response = await fetch(`${apiUrl}/api/lots/${lotPublicId}/evaluation`, {
-                    credentials: 'include'
+                    credentials: 'include',
+                    signal: abortController.signal,
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    setEvaluationResult(data);
-                    setIsTeaserMode(false);
+                    if (shouldApplyEvaluationFetchResult({
+                        isControlled: externalDataRef.current !== undefined,
+                        aborted: abortController.signal.aborted,
+                    })) {
+                        setEvaluationResult(data);
+                        setIsTeaserMode(false);
+                    }
                 } else {
                     // 404 или 401 — значит еще не запускали или не авторизованы
                     // Просто ничего не делаем, останется кнопка "Запустить анализ"
                 }
             } catch (e) {
-                console.error("Error checking evaluation:", e);
+                if (!abortController.signal.aborted) {
+                    console.error("Error checking evaluation:", e);
+                }
             } finally {
-                setIsLoadingInitial(false);
+                if (!abortController.signal.aborted) {
+                    setIsLoadingInitial(false);
+                }
             }
         };
 
         checkMyEvaluation();
-    }, [type, lotPublicId, apiUrl, user]);
+        return () => abortController.abort();
+    }, [type, lotPublicId, apiUrl, user, externalData]);
 
     const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
     // Запуск deep-анализа
     const handleEvaluate = async () => {
+        if (externalDataRef.current !== undefined) return;
+
         if (!user) {
             const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
             router.push(`/login?returnUrl=${returnUrl}`);
@@ -134,6 +171,11 @@ export default function AiEvaluationBlock({
                 method: 'POST',
                 credentials: 'include'
             });
+
+            if (externalDataRef.current !== undefined) {
+                setIsEvaluating(false);
+                return;
+            }
 
             // Если ошибка (402, 500 и т.д.)
             if (!response.ok) {
@@ -169,8 +211,13 @@ export default function AiEvaluationBlock({
                 // Ждем и данные, и таймер
                 const [data] = await Promise.all([dataPromise, sleep(minWaitMs)]);
                 
-                setEvaluationResult(data);
-                setIsTeaserMode(false);
+                if (shouldApplyEvaluationFetchResult({
+                    isControlled: externalDataRef.current !== undefined,
+                    aborted: false,
+                })) {
+                    setEvaluationResult(data);
+                    setIsTeaserMode(false);
+                }
                 setIsEvaluating(false);
                 
                 return;
@@ -184,7 +231,9 @@ export default function AiEvaluationBlock({
                 return;
             }
         } catch (err: any) {
-            setError(err.message || 'Произошла неизвестная ошибка');
+            if (externalDataRef.current === undefined) {
+                setError(err.message || 'Произошла неизвестная ошибка');
+            }
         } finally {
             setIsEvaluating(false);
         }
@@ -199,6 +248,11 @@ export default function AiEvaluationBlock({
         await sleep(10000); 
         
         for (let i = 0; i < maxAttempts; i++) {
+            if (externalDataRef.current !== undefined) {
+                setIsEvaluating(false);
+                return;
+            }
+
             try {
                 // Опрашиваем GET эндпоинт
                 const res = await fetch(`${apiUrl}/api/lots/${lotPublicId}/evaluation`, {
@@ -208,8 +262,13 @@ export default function AiEvaluationBlock({
                 if (res.ok) {
                     // УРА! Данные готовы
                     const data = await res.json();
-                    setEvaluationResult(data);
-                    setIsTeaserMode(false);
+                    if (shouldApplyEvaluationFetchResult({
+                        isControlled: externalDataRef.current !== undefined,
+                        aborted: false,
+                    })) {
+                        setEvaluationResult(data);
+                        setIsTeaserMode(false);
+                    }
                     setIsEvaluating(false);
                     return;
                 }
@@ -217,7 +276,9 @@ export default function AiEvaluationBlock({
                 // Если 404 (еще нет) или 401 - ждем и повторяем
                 
             } catch (e) {
-                console.error("Polling error", e);
+                if (externalDataRef.current === undefined) {
+                    console.error("Polling error", e);
+                }
             }
 
             // Ждем перед следующей попыткой
@@ -225,7 +286,9 @@ export default function AiEvaluationBlock({
         }
 
         // Если цикл кончился, а данных нет
-        setError("Время ожидания истекло. Попробуйте обновить страницу.");
+        if (externalDataRef.current === undefined) {
+            setError("Время ожидания истекло. Попробуйте обновить страницу.");
+        }
         setIsEvaluating(false);
     };
 
@@ -437,7 +500,7 @@ export default function AiEvaluationBlock({
                     )}
 
                     {/* Ликвидность (только для deep) */}
-                    {type === 'deep' && evaluationResult.liquidityScore !== undefined && (
+                    {type === 'deep' && evaluationResult.liquidityScore != null && (
                         <div className={styles.liquidityRow}>
                             <strong>Ликвидность: </strong>
                             <span style={{
@@ -458,13 +521,26 @@ export default function AiEvaluationBlock({
                     )}
 
                     {/* Детальный анализ (только для deep) */}
-                    {type === 'deep' && evaluationResult.reasoningText && (
+                    {type === 'deep' && evaluationResult.reasoningText && evaluationResult.isReasoningTextTeaser && (
                         <div className={styles.reasoningContainer}>
-                            <h3 className={styles.reasoningSummary}>Детальный анализ</h3>
+                            <h3 className={styles.reasoningSummary}>Ознакомительный фрагмент анализа</h3>
                             <div className={`${styles.reasoningText} ${isTeaserMode ? styles.teaserFade : ''}`}>
+
                                 {renderMarkdown(evaluationResult.reasoningText)}
+                                <div className={styles.reasoningTeaserNotice}>
+                                    <strong>Это ознакомительный фрагмент.</strong>
+                                    <span> Полный разбор становится публичным после завершения торгов.</span>
+                                    <Link href="/how-it-works/ai-assessment"> Подробнее об AI-оценке →</Link>
+                                </div>
                             </div>
                         </div>
+                    )}
+
+                    {type === 'deep' && evaluationResult.reasoningText && !evaluationResult.isReasoningTextTeaser && (
+                        <details className={styles.reasoningDetails}>
+                            <summary className={styles.reasoningSummary}>Показать детальный анализ</summary>
+                            <div className={styles.reasoningText}>{renderMarkdown(evaluationResult.reasoningText)}</div>
+                        </details>
                     )}
                 </div>
             )}

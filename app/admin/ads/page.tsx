@@ -1,7 +1,7 @@
 import AdminAdsClient from './AdminAdsClient';
 
 export const metadata = {
-    title: 'Модерация объявлений | s-lot.ru',
+    title: 'Модерация объявлений | auction.thepeace.ru',
     description: 'Панель модерации',
 };
 

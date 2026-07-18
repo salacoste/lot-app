@@ -1,0 +1,23 @@
+export type LeasingAlertCategory = 'earthmoving' | 'lifting' | 'concrete-asphalt' | 'roadbuilding' | 'transport-support' | 'attachments' | 'other' | 'unknown' | 'ambiguous';
+export type LeasingAlertConfidence = 'high' | 'medium' | 'low' | 'unknown';
+export type LeasingAlertReviewState = 'auto-accepted' | 'needs-review' | 'unknown';
+export type AlertableFilters = { company: string | null; category: LeasingAlertCategory | null; confidence: LeasingAlertConfidence | null; reviewState: LeasingAlertReviewState | null };
+export type SavedSearchCreatePayload = AlertableFilters & { name: string; counterpartyWatchlistEntryId: string | null };
+export type SavedSearchUpdatePayload = SavedSearchCreatePayload & { alertOptIn: boolean; version: number };
+export function alertableFiltersFromSuccessfulResponse(response: unknown): AlertableFilters | null;
+export function buildSavedSearchCreate(name: string, filters: AlertableFilters, counterpartyWatchlistEntryId: string | null): SavedSearchCreatePayload;
+export function buildSavedSearchUpdate(name: string, filters: AlertableFilters, counterpartyWatchlistEntryId: string | null, alertOptIn: boolean, version: number): SavedSearchUpdatePayload;
+export function containsDeletedLeasingPrivateMaterial(savedItems: readonly { id: string }[], alertItems: readonly { savedSearchId: string }[], deletedIds: ReadonlySet<string> | readonly string[]): boolean;
+export function purgeDeletedLeasingPrivateState<TSaved extends { id: string }, TFeed extends { offset: number; hasMore: boolean; totalCount: number; items: readonly { savedSearchId: string }[] }>(savedItems: readonly TSaved[], feed: TFeed, deletedId: string): { saved: TSaved[]; feed: TFeed };
+export function validateSavedSearchItem(value: unknown): boolean;
+export function validateSavedSearchList(value: unknown): boolean;
+export function validateAlertFeed(value: unknown): boolean;
+export function validateCounterpartyLeasingSignals(value: unknown, expectedLimit?: number): boolean;
+export function validateLeasingFixedProblem(value: unknown, expectedStatus: number): boolean;
+export function readExactLeasingFixedProblem(response: Response, allowedStatuses: readonly number[]): Promise<unknown | null>;
+export function createLeasingRequestCoordinator(): {
+  begin(): { signal: AbortSignal; isCurrent(): boolean };
+  abort(): void;
+};
+export function hasExactLeasingJsonSuccess(response: Response, allowedStatuses: readonly number[]): boolean;
+export function hasExactLeasingEmpty204(response: Response): Promise<boolean>;

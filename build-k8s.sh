@@ -44,6 +44,7 @@ docker build \
   --build-arg NEXT_PUBLIC_CSHARP_BACKEND_URL=$(grep NEXT_PUBLIC_CSHARP_BACKEND_URL "$ENV_FILE" | cut -d '=' -f2) \
   --build-arg NEXT_PUBLIC_FEATURE_PUBLISH_BUTTON_ENABLED=$(grep NEXT_PUBLIC_FEATURE_PUBLISH_BUTTON_ENABLED "$ENV_FILE" | cut -d '=' -f2) \
   --build-arg NEXT_PUBLIC_YANDEX_MAPS_API_KEY=$(grep NEXT_PUBLIC_YANDEX_MAPS_API_KEY "$ENV_FILE" | cut -d '=' -f2) \
+  --build-arg NEXT_PUBLIC_DADATA_API_KEY=$(grep NEXT_PUBLIC_DADATA_API_KEY "$ENV_FILE" | cut -d '=' -f2) \
   --build-arg NEXT_PUBLIC_APP_VERSION="$FULL_TAG" \
   --build-arg GIT_COMMIT="$GIT_COMMIT" \
   -t $IMAGE_NAME:"$FULL_TAG" .

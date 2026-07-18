@@ -232,6 +232,11 @@
   transition: background-color 0.2s;
 }
 
+.errorMessage {
+  margin: 0 0 0.75rem;
+  color: #b91c1c;
+}
+
 .searchButton:hover {
   background-color: #218838;
 }

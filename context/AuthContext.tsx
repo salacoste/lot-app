@@ -41,8 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                 if (res.ok) {
                     const data = await res.json();
-                    console.log("Данные от бэкенда:", data); 
-                    
                     setUser({
                         id: data.id,
                         name: data.name,

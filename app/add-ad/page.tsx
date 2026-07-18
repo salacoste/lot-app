@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import AddAdClient from './AddAdClient';
 
 export const metadata: Metadata = {
-  title: 'Разместить объявление — s-lot.ru',
+  title: 'Разместить объявление — auction.thepeace.ru',
   description: 'Подать бесплатное объявление о продаже недвижимости.',
 };
 

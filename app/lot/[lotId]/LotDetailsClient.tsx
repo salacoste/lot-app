@@ -6,30 +6,20 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LotMap from '../../../components/LotMap';
 import { Lot } from '../../../types';
-import Breadcrumbs from '../../../components/Breadcrumbs';
 import styles from './lot.module.css';
-import LotImageGallery from '../../../components/LotImageGallery/LotImageGallery';
 import AiEvaluationBlock from '@/components/AiEvaluationBlock/AiEvaluationBlock';
-import ContractModal from '@/components/ContractModal/ContractModal';
+import AdminAiEvaluationEditor, { type AdminAiEvaluationSnapshot } from './AdminAiEvaluationEditor';
 import { generateSlug } from '../../../utils/slugify';
+import LotHeaderSummary, { LotHeaderGallery, LotHeaderStatusSummary, getStatusTheme } from './LotHeaderSummary';
+import LotFavoriteActions from './LotFavoriteActions';
+import LotDocumentsSection from './LotDocumentsSection';
 import { buildLotBreadcrumbs, getLotPagePath } from '@/utils/lotBreadcrumbs';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getDynamicFiltersForCategories } from '@/app/data/constants';
 import { getWeightedMarketPrice, shouldShowPriceEstimate } from '@/utils/priceEvaluation';
-
-// Иконки для кнопки
-const HeartOutline = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-  </svg>
-);
-
-const HeartFilled = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="#e53e3e" stroke="#e53e3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-  </svg>
-);
+import LotViewTelemetryBeacon from './LotViewTelemetryBeacon';
+import LotAnalysisVote from './LotAnalysisVote';
 
 const IconTelegram = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -66,31 +56,6 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const getStatusTheme = (status?: string | null) => {
-  if (!status) return 'active'; // Если статуса нет, считаем активным
-  const s = status.toLowerCase();
-
-  // Конечные успешные
-  if (s.includes('завершенные') || s.includes('торги завершены')) {
-    return 'completed';
-  }
-
-  // Конечные неуспешные
-  if (
-    s.includes('отменен') ||
-    s.includes('не состоял') ||
-    s.includes('аннулирован')
-  ) {
-    return 'cancelled';
-  }
-
-  // Приостановленные (можно сделать желтым/оранжевым, если добавите .warning в css)
-  if (s.includes('приостановлен')) return 'warning';
-
-  // Все остальные (Открыт прием заявок, Идут торги и т.д.)
-  return 'active';
-};
-
 // Функция для определения, является ли статус конечным
 const isFinalStatus = (status?: string | null) => {
   if (!status) return false;
@@ -103,26 +68,12 @@ const isFinalStatus = (status?: string | null) => {
   );
 };
 
-// Функция определения активного этапа (примерная логика)
-const isCurrentStage = (startDate: string, endDate: string) => {
-  const now = new Date();
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  return now >= start && now < end;
-};
+const getTagLabel = (tag: NonNullable<Lot['tags']>[number]) => tag.label?.trim() || '';
 
 // Компонент получает данные через пропсы
 export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
   const router = useRouter();
   const { user } = useAuth();
-
-  // Состояния для избранного
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isFavLoading, setIsFavLoading] = useState(true);
-
-  // Состояния для договора
-  const [hasContractPermission, setHasContractPermission] = useState(false);
-  const [isContractModalOpen, setIsContractModalOpen] = useState(false);
 
   // Состояния для редактирования (Admin)
   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -134,6 +85,7 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingDocument, setIsUploadingDocument] = useState(false);
   const [isReclassifying, setIsReclassifying] = useState(false);
+  const [editorialSnapshot, setEditorialSnapshot] = useState<AdminAiEvaluationSnapshot | null>(null);
 
   // Состояние для причины статуса
   const [isReasonExpanded, setIsReasonExpanded] = useState(false);
@@ -157,74 +109,21 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
     }
   }, [lot?.id]);
 
-  // Проверка статуса избранного и прав на договор при загрузке
-  useEffect(() => {
-    if (!user || !lot) {
-      setIsFavLoading(false);
-      return;
-    }
+  const dynamicFiltersConfig = useMemo(() => {
+    if (!lot?.categories) return [];
+    return getDynamicFiltersForCategories(lot.categories.map(c => c.name), 'union');
+  }, [lot?.categories]);
 
-    const checkFavorite = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_CSHARP_BACKEND_URL}/api/favorites/ids`, {
-          credentials: 'include'
-        });
-        if (res.ok) {
-          const ids: string[] = await res.json();
-          setIsFavorite(ids.includes(lot.id));
-        }
-      } catch (e) {
-        console.error('Ошибка проверки избранного', e);
-      } finally {
-        setIsFavLoading(false);
-      }
-    };
+  const displayAttributes = useMemo(() => {
+    if (!lot?.attributes || Object.keys(lot.attributes).length === 0) return [];
 
-    const checkContractPermission = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_CSHARP_BACKEND_URL}/api/contracts/permission/${lot.id}`, {
-          credentials: 'include'
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setHasContractPermission(data.hasPermission);
-        }
-      } catch (e) {
-        console.error('Ошибка проверки прав на договор', e);
-      }
-    };
-
-    checkFavorite();
-    checkContractPermission();
-  }, [user, lot]);
-
-  // Обработчик клика
-  const handleToggleFavorite = async () => {
-    if (!user) {
-      router.push(`/login?returnUrl=/lot/${lot?.publicId}`);
-      return;
-    }
-
-    setIsFavLoading(true);
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_CSHARP_BACKEND_URL}/api/favorites/toggle/${lot?.id}`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setIsFavorite(data.isFavorite);
-      } else if (res.status === 400) {
-        const errorData = await res.json();
-        alert(errorData.message || "Ошибка добавления в избранное");
-      }
-    } catch (e) {
-      console.error('Ошибка при изменении избранного', e);
-    } finally {
-      setIsFavLoading(false);
-    }
-  };
+    return dynamicFiltersConfig
+      .filter(config => lot.attributes![config.id])
+      .map(config => ({
+        label: config.label,
+        value: lot.attributes![config.id]
+      }));
+  }, [lot?.attributes, dynamicFiltersConfig]);
 
   // Обработчик "Назад"
   const handleBackToList = () => {
@@ -422,7 +321,7 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
   };
 
   // TODO: Подготовка бейджей
-  const badges: any[] = [];
+  const badges: string[] = [];
 
   // Подготовка картинок для галереи
   // Если массив images пуст, пытаемся взять imageUrl или ставим заглушку
@@ -470,35 +369,48 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
   const showDepositColumn = lot.priceSchedules && lot.priceSchedules.some(s => s.deposit && s.deposit > 0);
 
   const displayPrice = getWeightedMarketPrice(lot);
+  const displayedQuickPrice = editorialSnapshot
+    ? editorialSnapshot.quick?.estimatedPrice
+    : displayPrice;
+  const displayedQuickSummary = editorialSnapshot
+    ? editorialSnapshot.quick?.investmentSummary
+    : lot.investmentSummary;
+  const displayedPriceConfidence = editorialSnapshot
+    ? editorialSnapshot.quick?.priceConfidence
+    : lot.priceConfidence;
+  const displayedDeepEvaluation = editorialSnapshot
+    ? editorialSnapshot.deep
+      ? {
+        estimatedPrice: editorialSnapshot.deep?.estimatedPrice,
+        liquidityScore: editorialSnapshot.deep?.liquidityScore,
+        investmentSummary: editorialSnapshot.deep?.investmentSummary,
+        reasoningText: editorialSnapshot.deep?.reasoningText,
+        isReasoningTextTeaser: false,
+      }
+      : null
+    : lot.reasoningText || lot.liquidityScore != null
+      ? {
+        estimatedPrice: null,
+        liquidityScore: lot.liquidityScore,
+        investmentSummary: lot.investmentSummary,
+        reasoningText: lot.reasoningText,
+        isReasoningTextTeaser: lot.isReasoningTextTeaser,
+      }
+      : undefined;
 
-  // Получаем конфигурацию динамических фильтров для категорий лота
-  const dynamicFiltersConfig = useMemo(() => {
-    if (!lot.categories) return [];
-    return getDynamicFiltersForCategories(lot.categories.map(c => c.name), 'union');
-  }, [lot.categories]);
-
-  // Фильтруем только те атрибуты, которые есть у лота и имеют значение
-  const displayAttributes = useMemo(() => {
-    if (!lot.attributes || Object.keys(lot.attributes).length === 0) return [];
-    
-    return dynamicFiltersConfig
-      .filter(config => lot.attributes![config.id])
-      .map(config => ({
-        label: config.label,
-        value: lot.attributes![config.id]
-      }));
-  }, [lot.attributes, dynamicFiltersConfig]);
+  const visibleTags = Array.isArray(lot.tags)
+    ? lot.tags.filter((tag) => getTagLabel(tag))
+    : [];
 
   return (
 
     <main className={styles.container}>
-      <Breadcrumbs crumbs={crumbs} />
-
-      <button onClick={handleBackToList} className={styles.backLink}>
-        &larr; Вернуться к списку лотов
-      </button>
-
-      <h1 className={styles.mainLotTitle}>{lot.title ? lot.title : lot.description}</h1>
+      <LotViewTelemetryBeacon lotPublicId={lot.publicId} />
+      <LotHeaderSummary
+        lot={lot}
+        crumbs={crumbs}
+        onBackToList={handleBackToList}
+      />
 
       <div className={styles.lotDetailGrid}>
 
@@ -506,21 +418,21 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
 
         {/* --- ЛЕВАЯ КОЛОНКА: ФОТОГАЛЕРЕЯ --- */}
         <div className={styles.imageSection}>
-          <LotImageGallery
-            images={galleryImages}
-            title={lot.title || ''}
+          <LotHeaderGallery
+            lot={lot}
+            galleryImages={galleryImages}
             badges={badges}
           />
           {user?.isAdmin && (
             <div style={{ marginTop: '1rem', textAlign: 'center' }}>
               <label className={styles.ctaButton} style={{ cursor: 'pointer', display: 'inline-block', padding: '0.5rem 1rem', background: '#3182ce', color: '#fff' }}>
                 {isUploadingImage ? 'Загрузка...' : 'Добавить фото'}
-                <input 
-                  type="file" 
-                  accept="image/*" 
+                <input
+                  type="file"
+                  accept="image/*"
                   multiple
-                  style={{ display: 'none' }} 
-                  onChange={handleImageUpload} 
+                  style={{ display: 'none' }}
+                  onChange={handleImageUpload}
                   disabled={isUploadingImage}
                 />
               </label>
@@ -531,59 +443,28 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
         {/* Правая колонка: Информация о лоте */}
         <div className={styles.infoSection}>
 
-          {/* Динамический бейдж со статусом торгов */}
-          <div className={`${styles.statusBadge} ${styles[getStatusTheme(lot.tradeStatus)]}`}>
-            {lot.tradeStatus ? lot.tradeStatus : 'Торги идут (прием заявок)'}
-          </div>
-
-          {lot.tradeStatusReason && (
-            <div className={`${styles.statusReason} ${styles[getStatusTheme(lot.tradeStatus)]}`}>
-              <b>Причина:</b>{' '}
-              {lot.tradeStatusReason.length > 200 && !isReasonExpanded
-                ? `${lot.tradeStatusReason.substring(0, 200)}... `
-                : lot.tradeStatusReason}
-              {lot.tradeStatusReason.length > 200 && (
-                <button
-                  onClick={() => setIsReasonExpanded(!isReasonExpanded)}
-                  className={styles.expandReasonBtn}
-                >
-                  {isReasonExpanded ? 'Скрыть' : 'Читать далее'}
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Активные лоты с этим кадастровым номером (под статусом) */}
-          {lot.sameCadastralLots && lot.sameCadastralLots.length > 0 && (
-            <div className={styles.sameCadastralTopBlock}>
-              <h3 className={styles.sameCadastralTopTitle}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                  <line x1="12" y1="9" x2="12" y2="13"></line>
-                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-                Внимание: найдены активные торги по этому объекту!
-              </h3>
-              <div className={styles.sameCadastralTopList}>
-                {lot.sameCadastralLots.map((sl) => {
-                  const slSlug = sl.slug ?? generateSlug(sl.title || '');
-                  const slUrl = `/lot/${slSlug}-${sl.publicId}`;
-                  return (
-                    <a key={sl.id} href={slUrl} className={styles.sameCadastralTopLink}>
-                      <span className={styles.sameCadastralTopLinkTitle}>{sl.title}</span>
-                      {sl.startPrice != null && (
-                        <span className={styles.sameCadastralTopLinkPrice}>{sl.startPrice.toLocaleString('ru-RU')} ₽</span>
-                      )}
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <LotHeaderStatusSummary
+            lot={lot}
+            isReasonExpanded={isReasonExpanded}
+            onToggleReason={() => setIsReasonExpanded(!isReasonExpanded)}
+          />
 
           <p className={styles.lotInfo}><b>Номер лота:</b> {lot.publicId}</p>
           <p className={styles.lotInfo}><b>Тип торгов:</b> {lot.bidding?.type}</p>
           <p className={styles.lotInfo}><b>Прием заявок:</b> {lot.bidding?.bidAcceptancePeriod}</p>
+
+          {visibleTags.length > 0 && (
+            <div className={styles.tagBlock} aria-label="Публичные теги лота">
+              {visibleTags.map((tag, index) => {
+                const tagText = getTagLabel(tag);
+                return (
+                  <span key={`${tag.key || tagText}-${index}`} className={styles.tagChip}>
+                    {tagText}
+                  </span>
+                );
+              })}
+            </div>
+          )}
 
           {lot.bidding?.tradePeriod && (
             <p className={styles.lotInfo}><b>Период торгов:</b> {lot.bidding?.tradePeriod}</p>
@@ -635,34 +516,9 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
             </div>
           )}
 
-          {/* КНОПКА ИЗБРАННОГО размещена после описания (до фотографий в мобильной версии, и сверху в информационной панели на десктопе) */}
-          <div className={styles.favoriteButtonWrap}>
-            <button
-              onClick={handleToggleFavorite}
-              disabled={isFavLoading}
-              className={`${styles.favoriteButtonDetail} ${isFavorite ? styles.isActive : ''}`}
-            >
-              {isFavorite ? <HeartFilled /> : <HeartOutline />}
-              {isFavorite ? 'В избранном' : 'Добавить в избранное'}
-            </button>
+          <LotFavoriteActions lot={lot} />
 
-            {hasContractPermission && (
-              <button 
-                className={styles.favoriteButtonDetail}
-                style={{ marginTop: '0.75rem', borderColor: '#3182ce', color: '#3182ce' }}
-                onClick={() => setIsContractModalOpen(true)}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                  <polyline points="10 9 9 9 8 9" />
-                </svg>
-                Сформировать договор
-              </button>
-            )}
-          </div>
+          <LotAnalysisVote lotId={lot.id} initialVotesCount={lot.votesCount} />
 
           <div className={styles.priceInfo}>
             {/* Блок для начальной цены */}
@@ -1032,27 +888,35 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
         */}
 
         {/* Экспресс-оценка (Quick) */}
-        {!isFinalStatus(lot.tradeStatus) && user?.isAdmin && (displayPrice || lot.investmentSummary) && (
+        {!isFinalStatus(lot.tradeStatus) && user?.isAdmin
+          && (editorialSnapshot !== null || displayedQuickPrice != null || displayedQuickSummary) && (
           <div className={styles.descriptionSection}>
             <AiEvaluationBlock
               type="quick"
               currentPrice={lot.startPrice}
-              priceConfidence={lot.priceConfidence}
+              priceConfidence={displayedPriceConfidence}
               quickData={{
-                estimatedPrice: displayPrice ?? undefined,
-                investmentSummary: lot.investmentSummary,
+                estimatedPrice: displayedQuickPrice,
+                investmentSummary: displayedQuickSummary,
               }}
             />
           </div>
         )}
 
         {/* Глубокая аналитика (DeepSeek Reasoning Evaluation) */}
-        {(lot.reasoningText || user?.isAdmin || (!isFinalStatus(lot.tradeStatus) && lot.startPrice != null && lot.startPrice > 1000000 && shouldShowPriceEstimate(lot))) && (
+        {(displayedDeepEvaluation !== undefined || lot.reasoningText || user?.isAdmin || (
+          !isFinalStatus(lot.tradeStatus)
+          && user?.isAdmin
+          && lot.startPrice != null
+          && lot.startPrice > 1000000
+          && shouldShowPriceEstimate(lot)
+        )) && (
           <div className={styles.descriptionSection}>
             <AiEvaluationBlock
               type="deep"
               lotPublicId={lot.publicId}
               currentPrice={lot.startPrice}
+              externalData={displayedDeepEvaluation}
               initialReasoningText={lot.reasoningText}
               isTeaser={lot.isReasoningTextTeaser}
               initialLiquidityScore={lot.liquidityScore}
@@ -1060,34 +924,16 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
           </div>
         )}
 
-        {/* Документы лота (если есть) */}
-        {lot.documents && lot.documents.length > 0 && (
+        {user?.isAdmin && (
           <div className={styles.descriptionSection}>
-            <h2 className={styles.sectionTitle}>Документы</h2>
-            <ul className={styles.documentList}>
-              {lot.documents.map((doc) => {
-                const downloadHref = doc.downloadUrl.startsWith('http')
-                  ? doc.downloadUrl
-                  : `${process.env.NEXT_PUBLIC_CSHARP_BACKEND_URL}${doc.downloadUrl}`;
-                return (
-                <li key={doc.id}>
-                  <a
-                    href={downloadHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.documentLink}
-                  >
-                    {doc.title}
-                    {doc.extension && !doc.title.toLowerCase().endsWith(doc.extension.toLowerCase()) && (
-                      <span className={styles.documentExt}> {doc.extension}</span>
-                    )}
-                  </a>
-                </li>
-                );
-              })}
-            </ul>
+            <AdminAiEvaluationEditor
+              lotPublicId={lot.publicId}
+              onSnapshotChange={setEditorialSnapshot}
+            />
           </div>
         )}
+
+        <LotDocumentsSection documents={lot.documents ?? []} />
       </div>
 
       {/* Показываем карту, только если есть координаты */}
@@ -1363,12 +1209,6 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
         </div>
       )}
 
-      {/* Модальное окно для формирования договора */}
-      <ContractModal 
-        isOpen={isContractModalOpen} 
-        onClose={() => setIsContractModalOpen(false)} 
-        lotId={lot.id} 
-      />
     </main>
   );
 }

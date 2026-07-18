@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { BackendResponseError, fetchHealthVersion } from '@/lib/api/backendClient';
 
 export default function VersionDisplay() {
   const [webApiVersion, setWebApiVersion] = useState('...');
@@ -10,18 +11,13 @@ export default function VersionDisplay() {
   useEffect(() => {
     async function fetchVersion() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_CSHARP_BACKEND_URL}/api/health/version`);
-        if (res.ok) {
-          const data = await res.json();
-          setWebApiVersion(data.webApiVersion || data.version || 'unknown');
-          setScraperVersion(data.scraperVersion || 'unknown');
-        } else {
-          setWebApiVersion('error');
-          setScraperVersion('error');
-        }
+        const data = await fetchHealthVersion();
+        setWebApiVersion(data.webApiVersion || data.version || 'unknown');
+        setScraperVersion(data.scraperVersion || 'unknown');
       } catch (error) {
-        setWebApiVersion('n/a');
-        setScraperVersion('n/a');
+        const fallback = error instanceof BackendResponseError ? 'error' : 'n/a';
+        setWebApiVersion(fallback);
+        setScraperVersion(fallback);
       }
     }
 
