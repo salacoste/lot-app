@@ -18,7 +18,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: '/api/',
+      disallow: ['/api/', '/account/counterparties', '/account/case-batches', '/account/cases'],
     },
     // Robots.txt поддерживает массив sitemap
     sitemap: sitemaps,

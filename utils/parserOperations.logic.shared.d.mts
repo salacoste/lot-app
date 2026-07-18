@@ -1,0 +1,17 @@
+export type ParserOwner = { auth: number; view: number; poll: number; action: number; export: number; attempt: number };
+export function validateParserRunPage(value: unknown): boolean;
+export function validateParserTaskPage(value: unknown, expectedRunId?: string): boolean;
+export function validateParserAttemptPage(value: unknown, expectedRunId?: string, expectedTaskId?: string): boolean;
+export function validateParserRun(value: unknown): boolean;
+export function validateParserActionResponse(value: unknown): boolean;
+export function parseParserRunFilters(search: string): { ok: boolean; filters: Record<string, string> };
+export function canonicalParserRunFilters(filters: Record<string, string | undefined>): string;
+export function createParserOperationsOwner(): ParserOwner;
+export type ParserOwnerFamily = 'auth' | 'view' | 'poll' | 'action' | 'export' | 'attempt';
+export function advanceParserOperationsOwner(owner: ParserOwner, family: ParserOwnerFamily): ParserOwner;
+export function captureParserOperationsOwner(owner: ParserOwner): ParserOwner;
+export function ownsParserOperationsCallback(owner: ParserOwner, token: ParserOwner, family: ParserOwnerFamily): boolean;
+export const parserPollingPausedMessage: string;
+export function parserPollDelay(transportFailures: number): number;
+export function readBoundedParserExport(response: Response, runId: string, maxBytes?: number): Promise<{ blob: Blob; filename: string }>;
+export function parserStatusLabel(value: string): string;

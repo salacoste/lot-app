@@ -198,6 +198,20 @@
   border: 1px solid #cbd5e1;
 }
 
+.reasoningTeaserNotice {
+    margin-top: 1rem;
+    padding: 0.9rem 1rem;
+    border-left: 3px solid #0070f3;
+    border-radius: 6px;
+    background: #eff6ff;
+    color: #334155;
+}
+
+.reasoningTeaserNotice a {
+    color: #0060df;
+    font-weight: 600;
+}
+
 /* --- ТОЧКА УВЕРЕННОСТИ --- */
 .confidenceRow {
   margin-bottom: 0.5rem;
@@ -239,6 +253,11 @@
 .confidenceNotEvaluable {
   background-color: #94a3b8;
   box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2);
+}
+
+.confidenceManual {
+  background-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
 .notEvaluableLabel {

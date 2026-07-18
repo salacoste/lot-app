@@ -78,6 +78,12 @@ export default async function sitemap({ id }: { id: number | string | Promise<nu
       changeFrequency: 'monthly',
       priority: 0.8,
     });
+    staticRoutes.push({
+      url: `${BASE_URL}/how-it-works/ai-assessment`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    });
 
     const passengerCarRoutes = await getPassengerCarListingRoutes();
     staticRoutes.push(...passengerCarRoutes);

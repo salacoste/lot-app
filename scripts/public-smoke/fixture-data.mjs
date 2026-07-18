@@ -32,6 +32,10 @@ export const primaryLot = {
   priceConfidence: 'medium',
   cadastralInfos: [{ cadastralNumber: '77:01:000401:1001' }],
   investmentSummary: 'Smoke fixture investment summary.',
+  reasoningText: 'Smoke teaser reasoning: объект имеет понятный сценарий использования, но требует проверки документов.',
+  isReasoningTextTeaser: true,
+  liquidityScore: 7,
+  votesCount: 4,
   createdAt: '2026-07-01T00:00:00Z',
   categories: [{ id: 10, name: 'Недвижимость' }, { id: 11, name: 'Коммерческая недвижимость' }],
   priceSchedules: [

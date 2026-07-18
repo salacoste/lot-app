@@ -11,7 +11,9 @@ export const ACCOUNT_SMOKE_ALLOWED_BLOCKED_EXTERNAL_HOSTS = [
 export const ACCOUNT_SMOKE_PROTECTED_PATHS = [
   '/api/auth/me',
   '/api/favorites',
+  '/api/voted-lots',
   '/api/lotalerts',
+  '/api/counterparty-watchlist',
   '/api/chat',
   '/api/ads/my',
 ];

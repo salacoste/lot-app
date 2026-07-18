@@ -1,0 +1,11 @@
+[
+  { "case": "cyrillic", "input": "Лада (ВАЗ)", "slug": "lada-vaz" },
+  { "case": "punctuation", "input": "XC.60, Recharge: / №5 × AWD", "slug": "xc-60-recharge-n5-x-awd" },
+  { "case": "trailing-particle", "input": "Автомобиль на", "slug": "avtomobil" },
+  { "case": "repeated-spaces", "input": "   Renault   Symbol / Thalia   ", "slug": "renault-symbol-thalia" },
+  { "case": "spaces-only", "input": "     ", "slug": "lot" },
+  { "case": "word-boundary-truncation", "input": "Очень длинное название автомобиля с большим количеством слов для проверки корректного обрезания по последнему пробелу и ограничения длины маршрута", "slug": "ochen-dlinnoe-nazvanie-avtomobilya-s-bolshim-kolichestvom-slov-dlya-proverki" },
+  { "case": "hard-truncation", "input": "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRST", "slug": "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefg" },
+  { "case": "empty-after-filter", "input": "!!!", "slug": "lot" },
+  { "case": "ignored-punctuation", "input": "Киа — Спектра", "slug": "kia-spektra" }
+]

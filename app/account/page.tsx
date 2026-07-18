@@ -6,6 +6,9 @@ import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import styles from './account.module.css';
 import AdCard from '@/components/AdCard/AdCard';
+import { LotItem } from '@/components/LotItem';
+import Pagination from '@/components/Pagination';
+import type { Lot } from '@/types';
 
 const ProfileIcon = () => (
     <svg className={styles.tabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -37,6 +40,21 @@ const AdsIcon = () => (
     </svg>
 );
 
+const VotesIcon = () => (
+    <svg className={styles.tabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 21s-7-4.35-9.33-8.3C.73 9.4 2.1 5.5 5.72 4.62 7.79 4.12 9.6 5.02 12 7.5c2.4-2.48 4.21-3.38 6.28-2.88 3.62.88 4.99 4.78 3.05 8.08C19 16.65 12 21 12 21z" />
+    </svg>
+);
+
+const CounterpartyIcon = () => (
+    <svg className={styles.tabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M3 21h18"></path><path d="M5 21V7l7-4 7 4v14"></path><path d="M9 10h2"></path><path d="M13 10h2"></path><path d="M9 14h2"></path><path d="M13 14h2"></path>
+    </svg>
+);
+
+type AccountTab = 'profile' | 'subscription' | 'my-ads' | 'my-votes';
+const VOTED_LOTS_PAGE_SIZE = 12;
+
 // Функция для расчета оставшихся дней триала
 const getTrialDaysLeft = (createdAt?: string) => {
     if (!createdAt) return 0;
@@ -63,9 +81,19 @@ const getDaysWord = (days: number) => {
 export default function AccountPage() {
     const { user, loading: authLoading, logout } = useAuth();
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'profile' | 'subscription' | 'my-ads'>('profile');
+    const [activeTab, setActiveTab] = useState<AccountTab>('profile');
     const [myAds, setMyAds] = useState<any[]>([]);
     const [loadingAds, setLoadingAds] = useState(false);
+    const [votedLots, setVotedLots] = useState<Lot[]>([]);
+    const [loadingVotedLots, setLoadingVotedLots] = useState(false);
+    const [votedLotsError, setVotedLotsError] = useState<string | null>(null);
+    const [votedLotsPage, setVotedLotsPage] = useState(1);
+    const [votedLotsTotalPages, setVotedLotsTotalPages] = useState(0);
+
+    useEffect(() => {
+        const requestedTab = new URLSearchParams(window.location.search).get('tab');
+        if (requestedTab === 'my-votes') setActiveTab('my-votes');
+    }, []);
 
     useEffect(() => {
         if (authLoading) return;
@@ -79,6 +107,44 @@ export default function AccountPage() {
             fetchMyAds();
         }
     }, [activeTab, user]);
+
+    useEffect(() => {
+        if (activeTab !== 'my-votes' || !user) return;
+        const controller = new AbortController();
+        setLoadingVotedLots(true);
+        setVotedLotsError(null);
+
+        fetch(`${process.env.NEXT_PUBLIC_CSHARP_BACKEND_URL}/api/voted-lots?page=${votedLotsPage}&pageSize=${VOTED_LOTS_PAGE_SIZE}`, {
+            credentials: 'include',
+            signal: controller.signal,
+        })
+            .then(async (response) => {
+                if (!response.ok) throw new Error('Не удалось загрузить поддержанные лоты.');
+                return response.json();
+            })
+            .then((data) => {
+                if (controller.signal.aborted) return;
+                setVotedLots(data.items || []);
+                setVotedLotsTotalPages(data.totalPages || 0);
+            })
+            .catch((requestError) => {
+                if (!controller.signal.aborted) {
+                    console.error('Ошибка загрузки поддержанных лотов', requestError);
+                    setVotedLotsError(requestError instanceof Error ? requestError.message : 'Не удалось загрузить лоты.');
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) setLoadingVotedLots(false);
+            });
+
+        return () => controller.abort();
+    }, [activeTab, user, votedLotsPage]);
+
+    const selectTab = (tab: AccountTab) => {
+        setActiveTab(tab);
+        const url = tab === 'my-votes' ? '/account?tab=my-votes' : '/account';
+        window.history.replaceState(null, '', url);
+    };
 
     const fetchMyAds = async () => {
         setLoadingAds(true);
@@ -117,7 +183,7 @@ export default function AccountPage() {
                 <aside className={styles.sidebar}>
                     <button
                         className={`${styles.tabLink} ${activeTab === 'profile' ? styles.activeTab : ''}`}
-                        onClick={() => setActiveTab('profile')}
+                        onClick={() => selectTab('profile')}
                     >
                         <ProfileIcon />
                         Профиль
@@ -125,7 +191,7 @@ export default function AccountPage() {
 
                     <button
                         className={`${styles.tabLink} ${activeTab === 'subscription' ? styles.activeTab : ''}`}
-                        onClick={() => setActiveTab('subscription')}
+                        onClick={() => selectTab('subscription')}
                     >
                         <SubscriptionIcon />
                         Подписка Pro
@@ -133,15 +199,36 @@ export default function AccountPage() {
 
                     <button
                         className={`${styles.tabLink} ${activeTab === 'my-ads' ? styles.activeTab : ''}`}
-                        onClick={() => setActiveTab('my-ads')}
+                        onClick={() => selectTab('my-ads')}
                     >
                         <AdsIcon />
                         Мои объявления
                     </button>
 
+                    <button
+                        className={`${styles.tabLink} ${activeTab === 'my-votes' ? styles.activeTab : ''}`}
+                        onClick={() => selectTab('my-votes')}
+                    >
+                        <VotesIcon />
+                        Мои голоса
+                    </button>
+
                     <Link href="/alerts" className={styles.tabLink}>
                         <AlertsIcon />
                         Мои уведомления
+                    </Link>
+
+                    <Link href="/account/counterparties" className={styles.tabLink}>
+                        <CounterpartyIcon />
+                        Контрагенты
+                    </Link>
+
+                    <Link href="/account/case-batches" className={styles.tabLink}>
+                        Пакетная проверка дел
+                    </Link>
+
+                    <Link href="/account/leasing" className={styles.tabLink}>
+                        Лизинговая активность
                     </Link>
 
                     <button
@@ -240,6 +327,39 @@ export default function AccountPage() {
                                         <AdCard key={ad.id} ad={ad} />
                                     ))}
                                 </div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'my-votes' && (
+                        <div>
+                            <h2 className={styles.sectionTitle}>Лоты, которые вы поддержали</h2>
+                            <p className={styles.sectionIntro}>
+                                Здесь собраны ваши запросы на AI-разбор. Чтобы освободить лимит, откройте лот и отзовите голос.
+                            </p>
+
+                            {loadingVotedLots ? (
+                                <div>Загрузка лотов...</div>
+                            ) : votedLotsError ? (
+                                <p className={styles.errorText}>{votedLotsError}</p>
+                            ) : votedLots.length === 0 ? (
+                                <div className={styles.emptyState}>
+                                    <p>Вы пока не голосовали за разбор лотов.</p>
+                                    <Link href="/" className={styles.subscribeButton}>Найти интересный лот</Link>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className={styles.votedLotsGrid}>
+                                        {votedLots.map((lot) => <LotItem key={lot.id} lot={lot} />)}
+                                    </div>
+                                    {votedLotsTotalPages > 1 && (
+                                        <Pagination
+                                            currentPage={votedLotsPage}
+                                            totalPages={votedLotsTotalPages}
+                                            onPageChange={setVotedLotsPage}
+                                        />
+                                    )}
+                                </>
                             )}
                         </div>
                     )}

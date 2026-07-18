@@ -210,3 +210,11 @@
     display: none; /* На мобилках скрываем слово "Аккаунт", оставляем только иконку */
   }
 }
+
+@media (max-width: 420px) {
+  .headerContent { justify-content: center; gap: 0; padding-inline: 8px; }
+  .leftSection { display: none; }
+  .rightSection { gap: 2px; min-width: 0; }
+  .favLink, .accountLink { padding: 4px; }
+  .logoutBtn { padding: 5px 8px; }
+}

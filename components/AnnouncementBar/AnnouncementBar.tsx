@@ -15,6 +15,13 @@ export interface Announcement {
 // История анонсов (самые новые сверху). В будущем можно использовать для Changelog.
 export const ANNOUNCEMENTS: Announcement[] = [
     {
+        id: 'aiLotAnalysisVotes_v1',
+        badge: 'Новое',
+        text: 'Голосуйте за лоты, для которых хотите увидеть детальный AI-разбор, и управляйте голосами в личном кабинете.',
+        linkHref: '/how-it-works/ai-assessment',
+        linkText: 'Как это работает →'
+    },
+    {
         id: 'hideVehicleFiltersPromo_v1',
         badge: 'Новое',
         text: 'Мы добавили умные фильтры! Теперь легковые автомобили можно искать по марке, модели, году выпуска и пробегу.',

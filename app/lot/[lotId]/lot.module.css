@@ -1114,3 +1114,94 @@
   color: #2b6cb0;
   margin-top: auto;
 }
+
+.analysisVote {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 1.25rem 0;
+  padding: 1.25rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+}
+
+.analysisVoteTitle {
+  margin: 0 0 0.4rem;
+  color: #1e3a8a;
+  font-size: 1.1rem;
+}
+
+.analysisVoteText {
+  margin: 0 0 0.45rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.analysisVoteLearnMore {
+  color: #0060df;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.analysisVoteActions {
+  min-width: 185px;
+  text-align: center;
+}
+
+.analysisVoteCount {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.analysisVoteButton {
+  width: 100%;
+  border: 1px solid #0070f3;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  background: #0070f3;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.analysisVoteButton:hover:not(:disabled) {
+  background: #0060df;
+}
+
+.analysisVoteButtonActive {
+  background: #fff;
+  color: #0060df;
+}
+
+.analysisVoteButton:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.analysisVoteError {
+  margin: 0.65rem 0 0;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.analysisVoteError a {
+  color: inherit;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .analysisVote {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .analysisVoteActions {
+    min-width: 0;
+  }
+}

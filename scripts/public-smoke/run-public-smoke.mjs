@@ -140,7 +140,11 @@ async function expectText(page, text, scenario) {
 }
 
 function expectedBackendStatus(request) {
-  if (request.path === '/api/auth/me') return request.statusCode === 401;
+  const isViewEventPath = /^\/api\/lots\/[^/]+\/view-events$/.test(request.path);
+  if (isViewEventPath && request.method === 'POST') return request.statusCode === 200;
+  if (isViewEventPath && request.method === 'OPTIONS') return request.statusCode === 204;
+  if (request.path === '/api/auth/me') return request.method === 'GET' && request.statusCode === 401;
+  if (request.path === '/api/counterparty-watchlist' || request.path === '/api/counterparty-watchlist/alerts') return request.method === 'GET' && request.statusCode === 401;
   if (
     request.path === '/__smoke/health'
     || request.path === '/__smoke/requests'
@@ -154,7 +158,7 @@ function expectedBackendStatus(request) {
     || request.path.endsWith('.svg')
     || request.path.endsWith('.pdf')
   ) {
-    return request.statusCode === 200;
+    return request.method === 'GET' && request.statusCode === 200;
   }
   return false;
 }
@@ -212,20 +216,36 @@ async function runBrowserScenarios() {
   });
 
   try {
+    const assertNoDueDiligenceReportLeak = async (scenario) => {
+      const body = await page.locator('body').innerText();
+      for (const forbidden of ['Отчёт о проверке контрагента', 'due-diligence-report-v1', 'PRIVATE-REPORT-XSS']) {
+        if (body.includes(forbidden)) throw new Error(`${scenario}: private due-diligence report content leaked into a public page`);
+      }
+    };
     await page.goto('/', { waitUntil: 'networkidle' });
     await expectText(page, 'Smoke Public Lot', 'home/list');
     await expectText(page, 'Smoke Passenger Car', 'home/list');
+    await assertNoDueDiligenceReportLeak('home/list');
 
     await page.goto('/lot/smoke-public-lot-21001', { waitUntil: 'networkidle' });
     await expectText(page, 'Smoke Public Lot', 'lot detail');
     await expectText(page, 'Smoke public document.pdf', 'lot detail document');
+    await expectText(page, 'Smoke teaser reasoning', 'lot AI reasoning teaser');
+    await expectText(page, 'Это ознакомительный фрагмент', 'lot AI reasoning teaser policy');
+    await expectText(page, '4 голосов', 'lot analysis vote count');
     const jsonLdCount = await page.locator('script[type="application/ld+json"]').count();
     if (jsonLdCount < 1) throw new Error('lot detail JSON-LD script not found');
+    await assertNoDueDiligenceReportLeak('lot detail');
+
+    await page.goto('/how-it-works/ai-assessment', { waitUntil: 'networkidle' });
+    await expectText(page, 'AI-оценка и разбор лотов', 'AI assessment public info');
+    await assertNoDueDiligenceReportLeak('AI assessment public info');
 
     await page.goto('/legkovye-avtomobili', { waitUntil: 'networkidle' });
     await expectText(page, 'Легковые автомобили с торгов', 'vehicle listing');
     await expectText(page, 'Smoke Passenger Car', 'vehicle listing');
     await expectText(page, 'Найдено лотов: 1', 'vehicle listing count');
+    await assertNoDueDiligenceReportLeak('vehicle listing');
 
     await page.goto('/map', { waitUntil: 'domcontentloaded' });
     await page.getByRole('heading', { name: 'Карта лотов с торгов по банкротству' }).waitFor({ state: 'attached', timeout: 15_000 });
@@ -243,13 +263,34 @@ async function runBrowserScenarios() {
     for (const expected of ['/legkovye-avtomobili', '/legkovye-avtomobili/toyota', '/lot/smoke-public-lot-21001']) {
       if (!sitemapBody.includes(expected)) throw new Error(`sitemap missing ${expected}`);
     }
+    if (sitemapBody.includes('/account/counterparties') || sitemapBody.includes('PRIVATE-COUNTERPARTY-SMOKE')) {
+      throw new Error('private counterparty route or sentinel leaked into sitemap');
+    }
+    const privateList = await page.request.get(`${backendUrl}/api/counterparty-watchlist`);
+    const privateAlerts = await page.request.get(`${backendUrl}/api/counterparty-watchlist/alerts`);
+    if (privateList.status() !== 401 || privateAlerts.status() !== 401) throw new Error('anonymous counterparty APIs did not fail closed');
+    const privateHtmlResponse = await page.request.get(`${appBaseUrl}/account/counterparties`);
+    const privateHtml = await privateHtmlResponse.text();
+    if (['PRIVATE-COUNTERPARTY-SMOKE', 'Отчёт о проверке контрагента', 'due-diligence-report-v1', 'PRIVATE-REPORT-XSS'].some((value) => privateHtml.includes(value))) {
+      throw new Error('private counterparty or due-diligence report content leaked into anonymous HTML');
+    }
+    await page.goto('/account/counterparties', { waitUntil: 'networkidle' });
+    await page.waitForURL((url) => url.pathname === '/login' && url.searchParams.get('returnUrl') === '/account/counterparties', { timeout: 15_000 });
 
     const backendRequests = await writeBrowserEvidence(consoleMessages, failedRequests, blockedExternalRequests);
-    const requiredBackendPaths = ['/api/health/version', '/api/lots/list', '/api/lots/21001', '/api/lots/vehicle-filter-options', '/api/lots/with-coordinates', '/api/lots/sitemap-data'];
+    if (backendRequests.some((request) => request.path.endsWith('/due-diligence-report'))) throw new Error('public browser issued a private due-diligence report request');
+    const requiredBackendPaths = ['/api/health/version', '/api/lots/list', '/api/lots/21001', '/api/lots/vehicle-filter-options', '/api/lots/with-coordinates', '/api/lots/sitemap-data', '/api/counterparty-watchlist', '/api/counterparty-watchlist/alerts'];
     for (const path of requiredBackendPaths) {
       if (!backendRequests.some((request) => request.path === path)) {
         throw new Error(`mock backend did not observe ${path}`);
       }
+    }
+    if (!backendRequests.some((request) => (
+      request.method === 'POST'
+      && request.path === '/api/lots/21001/view-events'
+      && request.statusCode === 200
+    ))) {
+      throw new Error('mock backend did not observe POST /api/lots/21001/view-events -> 200');
     }
     const unexpectedBackendRequests = backendRequests.filter((request) => !expectedBackendStatus(request));
     if (unexpectedBackendRequests.length > 0) {
@@ -258,6 +299,7 @@ async function runBrowserScenarios() {
 
     const unexpectedFailedRequests = failedRequests.filter((entry) => (
       !entry.includes('favicon')
+      && !(entry.includes('/_next/static/chunks/') && entry.includes('net::ERR_ABORTED'))
       && !(entry.includes('_rsc=') && entry.includes('net::ERR_ABORTED'))
     ));
     if (unexpectedFailedRequests.length > 0) {

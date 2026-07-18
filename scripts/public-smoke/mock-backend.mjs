@@ -75,10 +75,16 @@ export function createMockBackend() {
       res.writeHead(204, {
         'access-control-allow-origin': appOrigin,
         'access-control-allow-credentials': 'true',
-        'access-control-allow-methods': 'GET,OPTIONS',
-        'access-control-allow-headers': 'content-type',
+        'access-control-allow-methods': 'GET,POST,OPTIONS',
+        'access-control-allow-headers': 'content-type,x-lot-view-intent,x-lot-client-id',
       });
       res.end();
+      return;
+    }
+
+    const viewEventMatch = url.pathname.match(/^\/api\/lots\/([^/]+)\/view-events$/);
+    if (viewEventMatch && req.method === 'POST') {
+      json(res, 200, { accepted: true, noop: true }, requestRecord);
       return;
     }
 
@@ -95,7 +101,7 @@ export function createMockBackend() {
       json(res, 200, requests, requestRecord);
       return;
     }
-    if (url.pathname === '/api/auth/me') {
+    if (url.pathname === '/api/auth/me' || url.pathname === '/api/counterparty-watchlist' || url.pathname === '/api/counterparty-watchlist/alerts') {
       json(res, 401, { error: 'anonymous smoke user' }, requestRecord);
       return;
     }

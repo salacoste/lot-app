@@ -176,6 +176,13 @@ export const Header = () => {
                                         </svg>
                                         <span className={styles.accountText}>Договоры</span>
                                     </Link>
+                                    <Link href="/admin/parser-operations" className={styles.accountLink} title="Операции парсеров">
+                                        <svg className={styles.accountIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <path d="M4 6h16M4 12h16M4 18h16"></path>
+                                            <circle cx="8" cy="6" r="1"></circle><circle cx="16" cy="12" r="1"></circle><circle cx="10" cy="18" r="1"></circle>
+                                        </svg>
+                                        <span className={styles.accountText}>Парсеры</span>
+                                    </Link>
                                 </>
                             )}
 

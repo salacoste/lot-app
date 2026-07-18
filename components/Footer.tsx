@@ -20,6 +20,7 @@ export default function Footer() {
           <Link href="/subscribe" className="footer-link">Тарифы</Link>
           <Link href="/how-it-works/alerts" className="footer-link">Умная рассылка</Link>
           <Link href="/how-it-works/similar-lots" className="footer-link">Похожие лоты</Link>
+          <Link href="/how-it-works/ai-assessment" className="footer-link">AI-оценка лотов</Link>
           {/* <Link href="/terms" className="footer-link">Публичная оферта</Link> */}
           <Link href="/requisites" className="footer-link">Реквизиты</Link>
         </nav>

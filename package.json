@@ -6,19 +6,28 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "generate:api-types": "openapi-typescript ../scraper/Lots.WebApi/openapi/Lots.WebApi.json -o lib/generated/lots-webapi.ts --alphabetize",
     "check:api-types": "openapi-typescript ../scraper/Lots.WebApi/openapi/Lots.WebApi.json -o lib/generated/lots-webapi.ts --alphabetize --check",
     "typecheck": "next typegen && tsc --noEmit --pretty false",
+    "test:admin-ai-evaluation-editor": "node --test scripts/tests/admin-ai-evaluation-editor.logic.test.mjs",
+    "test:leasing-dashboard": "node --test scripts/tests/leasing-dashboard.logic.test.mjs",
+    "test:leasing-alerts": "node --test scripts/tests/leasing-alerts.logic.test.mjs",
+    "test:parser-operations": "node --test scripts/tests/parser-operations.logic.test.mjs",
+    "validate:vehicle-slugs": "node scripts/validate-vehicle-route-slugs.mjs",
+    "validate:lot-view-telemetry": "node scripts/validate-lot-view-telemetry.mjs",
     "smoke:public": "NEXT_PUBLIC_CSHARP_BACKEND_URL=http://127.0.0.1:4021 node scripts/public-smoke/run-public-smoke.mjs",
     "smoke:account": "NEXT_PUBLIC_CSHARP_BACKEND_URL=http://127.0.0.1:4022 node scripts/account-smoke/run-account-smoke.mjs",
+    "smoke:case-dossier": "node scripts/case-dossier-smoke/run-case-dossier-smoke.mjs",
+    "smoke:leasing": "node scripts/leasing-smoke/run-leasing-smoke.mjs",
+    "smoke:parser-operations": "node scripts/parser-operations-smoke/run-parser-operations-smoke.mjs",
     "smoke:s3": "node scripts/s3-smoke/run-s3-smoke.mjs"
   },
   "dependencies": {
     "@microsoft/signalr": "^10.0.0",
     "@pbe/react-yandex-maps": "^1.2.5",
     "lodash.debounce": "^4.0.8",
-    "next": "16.2.4",
+    "next": "16.2.10",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
@@ -29,9 +38,14 @@
     "@types/pg": "^8.15.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.2.10",
     "openapi-typescript": "7.13.0",
     "playwright": "^1.61.1",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "postcss": "8.5.17"
   }
 }

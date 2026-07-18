@@ -8,6 +8,7 @@ import LotMap from '../../../components/LotMap';
 import { Lot } from '../../../types';
 import styles from './lot.module.css';
 import AiEvaluationBlock from '@/components/AiEvaluationBlock/AiEvaluationBlock';
+import AdminAiEvaluationEditor, { type AdminAiEvaluationSnapshot } from './AdminAiEvaluationEditor';
 import { generateSlug } from '../../../utils/slugify';
 import LotHeaderSummary, { LotHeaderGallery, LotHeaderStatusSummary, getStatusTheme } from './LotHeaderSummary';
 import LotFavoriteActions from './LotFavoriteActions';
@@ -17,6 +18,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getDynamicFiltersForCategories } from '@/app/data/constants';
 import { getWeightedMarketPrice, shouldShowPriceEstimate } from '@/utils/priceEvaluation';
+import LotViewTelemetryBeacon from './LotViewTelemetryBeacon';
+import LotAnalysisVote from './LotAnalysisVote';
 
 const IconTelegram = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -82,6 +85,7 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingDocument, setIsUploadingDocument] = useState(false);
   const [isReclassifying, setIsReclassifying] = useState(false);
+  const [editorialSnapshot, setEditorialSnapshot] = useState<AdminAiEvaluationSnapshot | null>(null);
 
   // Состояние для причины статуса
   const [isReasonExpanded, setIsReasonExpanded] = useState(false);
@@ -104,6 +108,22 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
       }
     }
   }, [lot?.id]);
+
+  const dynamicFiltersConfig = useMemo(() => {
+    if (!lot?.categories) return [];
+    return getDynamicFiltersForCategories(lot.categories.map(c => c.name), 'union');
+  }, [lot?.categories]);
+
+  const displayAttributes = useMemo(() => {
+    if (!lot?.attributes || Object.keys(lot.attributes).length === 0) return [];
+
+    return dynamicFiltersConfig
+      .filter(config => lot.attributes![config.id])
+      .map(config => ({
+        label: config.label,
+        value: lot.attributes![config.id]
+      }));
+  }, [lot?.attributes, dynamicFiltersConfig]);
 
   // Обработчик "Назад"
   const handleBackToList = () => {
@@ -349,24 +369,34 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
   const showDepositColumn = lot.priceSchedules && lot.priceSchedules.some(s => s.deposit && s.deposit > 0);
 
   const displayPrice = getWeightedMarketPrice(lot);
-
-  // Получаем конфигурацию динамических фильтров для категорий лота
-  const dynamicFiltersConfig = useMemo(() => {
-    if (!lot.categories) return [];
-    return getDynamicFiltersForCategories(lot.categories.map(c => c.name), 'union');
-  }, [lot.categories]);
-
-  // Фильтруем только те атрибуты, которые есть у лота и имеют значение
-  const displayAttributes = useMemo(() => {
-    if (!lot.attributes || Object.keys(lot.attributes).length === 0) return [];
-    
-    return dynamicFiltersConfig
-      .filter(config => lot.attributes![config.id])
-      .map(config => ({
-        label: config.label,
-        value: lot.attributes![config.id]
-      }));
-  }, [lot.attributes, dynamicFiltersConfig]);
+  const displayedQuickPrice = editorialSnapshot
+    ? editorialSnapshot.quick?.estimatedPrice
+    : displayPrice;
+  const displayedQuickSummary = editorialSnapshot
+    ? editorialSnapshot.quick?.investmentSummary
+    : lot.investmentSummary;
+  const displayedPriceConfidence = editorialSnapshot
+    ? editorialSnapshot.quick?.priceConfidence
+    : lot.priceConfidence;
+  const displayedDeepEvaluation = editorialSnapshot
+    ? editorialSnapshot.deep
+      ? {
+        estimatedPrice: editorialSnapshot.deep?.estimatedPrice,
+        liquidityScore: editorialSnapshot.deep?.liquidityScore,
+        investmentSummary: editorialSnapshot.deep?.investmentSummary,
+        reasoningText: editorialSnapshot.deep?.reasoningText,
+        isReasoningTextTeaser: false,
+      }
+      : null
+    : lot.reasoningText || lot.liquidityScore != null
+      ? {
+        estimatedPrice: null,
+        liquidityScore: lot.liquidityScore,
+        investmentSummary: lot.investmentSummary,
+        reasoningText: lot.reasoningText,
+        isReasoningTextTeaser: lot.isReasoningTextTeaser,
+      }
+      : undefined;
 
   const visibleTags = Array.isArray(lot.tags)
     ? lot.tags.filter((tag) => getTagLabel(tag))
@@ -375,6 +405,7 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
   return (
 
     <main className={styles.container}>
+      <LotViewTelemetryBeacon lotPublicId={lot.publicId} />
       <LotHeaderSummary
         lot={lot}
         crumbs={crumbs}
@@ -486,6 +517,8 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
           )}
 
           <LotFavoriteActions lot={lot} />
+
+          <LotAnalysisVote lotId={lot.id} initialVotesCount={lot.votesCount} />
 
           <div className={styles.priceInfo}>
             {/* Блок для начальной цены */}
@@ -855,27 +888,44 @@ export default function LotDetailsClient({ lot }: { lot: Lot | null }) {
         */}
 
         {/* Экспресс-оценка (Quick) */}
-        {!isFinalStatus(lot.tradeStatus) && user?.isAdmin && (displayPrice || lot.investmentSummary) && (
+        {!isFinalStatus(lot.tradeStatus) && user?.isAdmin
+          && (editorialSnapshot !== null || displayedQuickPrice != null || displayedQuickSummary) && (
           <div className={styles.descriptionSection}>
             <AiEvaluationBlock
               type="quick"
               currentPrice={lot.startPrice}
-              priceConfidence={lot.priceConfidence}
+              priceConfidence={displayedPriceConfidence}
               quickData={{
-                estimatedPrice: displayPrice ?? undefined,
-                investmentSummary: lot.investmentSummary,
+                estimatedPrice: displayedQuickPrice,
+                investmentSummary: displayedQuickSummary,
               }}
             />
           </div>
         )}
 
         {/* Глубокая аналитика (DeepSeek Reasoning Evaluation) */}
-        {!isFinalStatus(lot.tradeStatus) && user?.isAdmin && lot.startPrice != null && lot.startPrice > 1000000 && shouldShowPriceEstimate(lot) && (
+        {(displayedDeepEvaluation !== undefined || (
+          !isFinalStatus(lot.tradeStatus)
+          && user?.isAdmin
+          && lot.startPrice != null
+          && lot.startPrice > 1000000
+          && shouldShowPriceEstimate(lot)
+        )) && (
           <div className={styles.descriptionSection}>
             <AiEvaluationBlock
               type="deep"
               lotPublicId={lot.publicId}
               currentPrice={lot.startPrice}
+              externalData={displayedDeepEvaluation}
+            />
+          </div>
+        )}
+
+        {user?.isAdmin && (
+          <div className={styles.descriptionSection}>
+            <AdminAiEvaluationEditor
+              lotPublicId={lot.publicId}
+              onSnapshotChange={setEditorialSnapshot}
             />
           </div>
         )}

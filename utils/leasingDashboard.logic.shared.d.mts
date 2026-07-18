@@ -1,0 +1,14 @@
+export type LeasingFilters = { from: string; to: string; company: string | null; category: string | null; confidence: string | null; reviewState: string | null; sourceStatus: string | null };
+export function validDate(value: unknown): boolean;
+export function normalizeCompany(value: unknown): string | null;
+export function parseLeasingSearch(search: string, authorityDate?: string): { ok: boolean; errors: string[]; useServerDefaults: boolean; filters: LeasingFilters; offset: number; limit: number };
+export function canonicalLeasingSearch(filters: LeasingFilters, offset?: number, limit?: number, omitDates?: boolean): string;
+export function resetLeasingSearch(search: string): string;
+export function validLeasingCopiedText(value: unknown, maximum: number): boolean;
+export function validateLeasingEvidenceFields(value: Record<string, unknown>, authorityAtUtc: string | number): boolean;
+export function validateLeasingSourceHealth(value: unknown): boolean;
+export function validateLeasingResponse(value: unknown): boolean;
+export const leasingVocabulary: { categories: readonly string[]; confidence: readonly string[]; review: readonly string[]; source: readonly string[] };
+export const leasingLabels: Readonly<Record<string, string>>;
+export function leasingCaveatCopy(code: string): string;
+export function safeLeasingError(status: number): string;
